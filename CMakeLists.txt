@@ -10,13 +10,13 @@ find_package(glew CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 file(GLOB_RECURSE SOURCE_FILES
-  ${CMAKE_SOURCE_DIR}/src/**/*.cpp
+  ${CMAKE_SOURCE_DIR}/src/Libs/*.cpp
+  ${CMAKE_SOURCE_DIR}/src/main.cpp
 )
 
 add_executable(advanced_computer_graphics_final ${SOURCE_FILES})
 
 target_include_directories(advanced_computer_graphics_final PRIVATE
-  ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/include
 )
 
@@ -37,6 +37,13 @@ endif()
 # Copy shaders next to the binary
 add_custom_command(TARGET advanced_computer_graphics_final POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${CMAKE_SOURCE_DIR}/src/shaders
-          $<TARGET_FILE_DIR:advanced_computer_graphics_final>/shaders
+          ${CMAKE_SOURCE_DIR}/Shaders
+          $<TARGET_FILE_DIR:advanced_computer_graphics_final>/Shaders
+)
+
+# Copy model next to the binary
+add_custom_command(TARGET advanced_computer_graphics_final POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${CMAKE_SOURCE_DIR}/Models
+          $<TARGET_FILE_DIR:advanced_computer_graphics_final>/Models
 )
