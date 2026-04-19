@@ -5,21 +5,12 @@ Transform::Transform()
     : isDirty(true), position(0, 0, 0), rotation(0, 0, 0), scale(1, 1, 1), model(1.0f) {}
 
 glm::mat4 Transform::getModel() {
-    if (!isDirty) {
-        return this->model;
+    if (isDirty) {
+        recomputeModel();
+        isDirty = false;
     }
- 
-    isDirty = false;
 
-    glm::mat4 model(1.0f);
-    
-    model = glm::translate(model, this->position);
-    model = glm::rotate(model, glm::radians(this->rotation.x), glm::vec3(1, 0, 0));
-    model = glm::rotate(model, glm::radians(this->rotation.y), glm::vec3(0, 1, 0));
-    model = glm::rotate(model, glm::radians(this->rotation.z), glm::vec3(0, 0, 1));
-    model = glm::scale(model, this->scale);
-
-    return this->model = model;
+    return this->model;
 }
 
 glm::vec3 Transform::getPosition() const {
@@ -47,4 +38,16 @@ void Transform::setRotation(const glm::vec3 &rotation) {
 void Transform::setScale(const glm::vec3 &scale) {
     isDirty = true;
     this->scale = scale;
+}
+
+void Transform::recomputeModel() {
+    glm::mat4 model(1.0f);
+    
+    model = glm::translate(model, this->position);
+    model = glm::rotate(model, glm::radians(this->rotation.x), glm::vec3(1, 0, 0));
+    model = glm::rotate(model, glm::radians(this->rotation.y), glm::vec3(0, 1, 0));
+    model = glm::rotate(model, glm::radians(this->rotation.z), glm::vec3(0, 0, 1));
+    model = glm::scale(model, this->scale);
+
+    this->model = model;
 }

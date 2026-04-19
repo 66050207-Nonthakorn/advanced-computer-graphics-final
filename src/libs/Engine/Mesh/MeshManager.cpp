@@ -38,6 +38,5 @@ std::shared_ptr<Mesh> MeshManager::getFromFile(const std::string &path) {
     }
 
     auto data = MeshLoader::loadFromObj(path);
-
     return meshes[path] = std::make_shared<Mesh>(data);
 }

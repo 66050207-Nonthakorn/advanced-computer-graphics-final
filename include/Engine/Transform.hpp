@@ -17,10 +17,10 @@ public:
 
 private:
     bool isDirty;
-
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
 
     glm::mat4 model;
+    void recomputeModel();
 };

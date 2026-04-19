@@ -38,7 +38,7 @@ endif()
 add_custom_target(copy_shaders ALL
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${CMAKE_SOURCE_DIR}/Shaders
-          ${CMAKE_BINARY_DIR}/Shaders
+          $<TARGET_FILE_DIR:advanced_computer_graphics_final>/Shaders
   COMMENT "Copying shaders to build directory"
 )
 
@@ -46,6 +46,14 @@ add_custom_target(copy_shaders ALL
 add_custom_target(copy_models ALL
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${CMAKE_SOURCE_DIR}/Models
-          ${CMAKE_BINARY_DIR}/Models
+          $<TARGET_FILE_DIR:advanced_computer_graphics_final>/Models
   COMMENT "Copying models to build directory"
+)
+
+# Copy textures next to the binary (runs on every build)
+add_custom_target(copy_textures ALL
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+          ${CMAKE_SOURCE_DIR}/Textures
+          $<TARGET_FILE_DIR:advanced_computer_graphics_final>/Textures
+  COMMENT "Copying textures to build directory"
 )

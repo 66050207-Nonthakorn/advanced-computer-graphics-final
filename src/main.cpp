@@ -3,13 +3,20 @@
 #include "Engine/Window.hpp"
 #include "Engine/Renderer.hpp"
 #include "Engine/Camera.hpp"
-
 #include "Engine/Mesh/MeshManager.hpp"
 #include "Engine/Shader/ShaderManager.hpp"
+#include "Engine/Texture/TextureManager.hpp"
+#include "Engine/Material/MaterialManager.hpp"
+#include "Engine/Material/BlinnPhongMaterial.hpp"
+
+#include "Main/MainScene.hpp"
+
+#include "glm/vec3.hpp"
 
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <thread>
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
@@ -25,32 +32,28 @@ int main() {
     // Manager
     auto& meshManager = MeshManager::instance();
     auto& shaderManager = ShaderManager::instance();
+    auto& textureManager = TextureManager::instance();
+    auto& materialManager = MaterialManager::instance();
 
     // Load resource
-    shaderManager.load("blinn-phong", "Shaders/basic.vert", "Shaders/blinn-phong.frag");
-    shaderManager.load("phong", "Shaders/basic.vert", "Shaders/phong.frag");
+    shaderManager.load("blinn-phong", "Shaders/blinn-phong.vert", "Shaders/blinn-phong.frag");
+    textureManager.load("dirt", "Textures/dirt.jpg");
+    materialManager.add("dirt", std::make_shared<BlinnPhongMaterial>(textureManager.get("dirt")));
 
-    // Object initialize
-    auto object{std::make_shared<SceneObject>()};
-    object->mesh = meshManager.getFromFile("Models/suzanne.obj");
-    // object->mesh = meshManager.get("sphere");
-    object->material = std::make_shared<Material>(shaderManager.get("blinn-phong"));
-
-    auto object2{std::make_shared<SceneObject>()};
-    object2->mesh = meshManager.getFromFile("Models/suzanne.obj");
-    // object2->mesh = meshManager.get("sphere");
-    object2->material = std::make_shared<Material>(shaderManager.get("phong"));
-    object2->transform.setPosition({3, 0, 0});
-
-    // Objects
-    std::vector<std::shared_ptr<SceneObject>> objects{ object, object2 };
+    MainScene mainScene;
 
     float yaw = -90, pitch = 0, sensitivity = 0.2f;
     float speed = 0.05f;
 
+    float pt = glfwGetTime(); 
+
     while (!window.shouldClose()) {
         window.pollEvent();
         renderer.clearScreen();
+
+        float t = glfwGetTime();
+        float dt = t - pt;
+        pt = t;
 
         if (window.isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
             window.close();
@@ -89,8 +92,10 @@ int main() {
         }
 
         camera.target = camera.position + glm::normalize(front);
+        
+        mainScene.update(dt);
+        renderer.draw(mainScene, camera);
 
-        renderer.draw(objects, camera);
         window.swapBuffers();
     }
 

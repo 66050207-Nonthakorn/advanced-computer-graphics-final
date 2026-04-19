@@ -11,6 +11,4 @@ struct SceneObject {
     Transform transform;
     std::shared_ptr<Mesh> mesh;
     std::shared_ptr<Material> material;
-
-    void draw(const Camera& camera);
 };
