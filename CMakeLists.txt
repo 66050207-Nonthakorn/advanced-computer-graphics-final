@@ -34,16 +34,18 @@ if(APPLE)
   )
 endif()
 
-# Copy shaders next to the binary
-add_custom_command(TARGET advanced_computer_graphics_final POST_BUILD
+# Copy shaders next to the binary (runs on every build)
+add_custom_target(copy_shaders ALL
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${CMAKE_SOURCE_DIR}/Shaders
-          $<TARGET_FILE_DIR:advanced_computer_graphics_final>/Shaders
+          ${CMAKE_BINARY_DIR}/Shaders
+  COMMENT "Copying shaders to build directory"
 )
 
-# Copy model next to the binary
-add_custom_command(TARGET advanced_computer_graphics_final POST_BUILD
+# Copy models next to the binary (runs on every build)
+add_custom_target(copy_models ALL
   COMMAND ${CMAKE_COMMAND} -E copy_directory
           ${CMAKE_SOURCE_DIR}/Models
-          $<TARGET_FILE_DIR:advanced_computer_graphics_final>/Models
+          ${CMAKE_BINARY_DIR}/Models
+  COMMENT "Copying models to build directory"
 )

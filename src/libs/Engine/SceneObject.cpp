@@ -8,6 +8,7 @@ void SceneObject::draw(const Camera& camera) {
     this->material->shader->uniformMat4("view", camera.getView());
     this->material->shader->uniformMat4("projection", camera.getProjection());
 
+    this->material->shader->uniformVec3("viewPosition", camera.position);
     this->material->shader->uniformVec3("objectColor", glm::vec3(1, 0, 0));
 
     // Draw Mesh

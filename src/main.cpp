@@ -27,15 +27,23 @@ int main() {
     auto& shaderManager = ShaderManager::instance();
 
     // Load resource
-    shaderManager.load("basic", "Shaders/basic.vert", "Shaders/basic.frag");
+    shaderManager.load("blinn-phong", "Shaders/basic.vert", "Shaders/blinn-phong.frag");
+    shaderManager.load("phong", "Shaders/basic.vert", "Shaders/phong.frag");
 
     // Object initialize
     auto object{std::make_shared<SceneObject>()};
-    object->mesh = meshManager.get("sphere");
-    object->material = std::make_shared<Material>(shaderManager.get("basic"));
+    object->mesh = meshManager.getFromFile("Models/suzanne.obj");
+    // object->mesh = meshManager.get("sphere");
+    object->material = std::make_shared<Material>(shaderManager.get("blinn-phong"));
+
+    auto object2{std::make_shared<SceneObject>()};
+    object2->mesh = meshManager.getFromFile("Models/suzanne.obj");
+    // object2->mesh = meshManager.get("sphere");
+    object2->material = std::make_shared<Material>(shaderManager.get("phong"));
+    object2->transform.setPosition({3, 0, 0});
 
     // Objects
-    std::vector<std::shared_ptr<SceneObject>> objects{ object };
+    std::vector<std::shared_ptr<SceneObject>> objects{ object, object2 };
 
     float yaw = -90, pitch = 0, sensitivity = 0.2f;
     float speed = 0.05f;
