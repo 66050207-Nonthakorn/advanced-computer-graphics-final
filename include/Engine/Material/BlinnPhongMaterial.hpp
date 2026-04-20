@@ -11,9 +11,10 @@ public:
     BlinnPhongMaterial();
     BlinnPhongMaterial(const std::shared_ptr<Texture>& texture);
     
-    void bindPerFrame(const MaterialPerFrameContext& context) override;
-    void bindPerObject(const MaterialPerObjectContext& context) override;
+    void bindPerFrame(const Material::PerFrameContext& context) override;
+    void bindPerObject(const Material::PerObjectContext& context) override;
 
 private:
     std::shared_ptr<Texture> texture;
+    float ambient, diffuse, specular, shininess;
 };

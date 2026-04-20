@@ -13,12 +13,15 @@ MainScene::MainScene() {
     object.mesh = MeshManager::instance().get("cube");
     object.material = MaterialManager::instance().get("dirt");
 
-    SceneObject lightCube;
-    object.mesh = MeshManager::instance().get("cube");
-    object.material = MaterialManager::instance().get("dirt");
+    // SceneObject lightCube;
+    // object.mesh = MeshManager::instance().get("cube");
+    // object.material = MaterialManager::instance().get("dirt");
 
     Light light;
     light.position = glm::vec3(0, 0, 0);
+    light.ambient = 0.1f;
+    light.diffuse = 0.5f;
+    light.specular = 1.0f;
 
     this->sceneObjects.emplace_back(object);
     this->lights.emplace_back(light);

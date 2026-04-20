@@ -6,21 +6,20 @@
 #include "Engine/Light.hpp"
 
 #include <memory>
-
-struct MaterialPerFrameContext {
-    const Camera& camera;
-    const std::vector<Light>& lights;
-};
-
-struct MaterialPerObjectContext {
-    Transform& transform;
-};
-
 class Material {
 public:
+    struct PerFrameContext {
+        const Camera& camera;
+        const std::vector<Light>& lights;
+    };
+
+    struct PerObjectContext {
+        Transform& transform;
+    };
+    
     Material(const std::shared_ptr<Shader>& shader);
-    virtual void bindPerFrame(const MaterialPerFrameContext& context) = 0;
-    virtual void bindPerObject(const MaterialPerObjectContext& context) = 0;
+    virtual void bindPerFrame(const Material::PerFrameContext& context) = 0;
+    virtual void bindPerObject(const Material::PerObjectContext& context) = 0;
 protected:
     std::shared_ptr<Shader> shader;
 };

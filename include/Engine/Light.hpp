@@ -4,4 +4,7 @@
 
 struct Light {
     glm::vec3 position;
+    float ambient;
+    float diffuse;
+    float specular;
 };
