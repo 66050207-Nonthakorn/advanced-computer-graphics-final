@@ -16,6 +16,6 @@ void main() {
     gl_Position = projection * view * model * vec4(aPosition, 1.0);
 
     normal = mat3(transpose(inverse(model))) * aNormal;
-    uv = aUv;
     worldPosition = vec3(model * vec4(aPosition, 1.0));
+    uv = aUv;
 }

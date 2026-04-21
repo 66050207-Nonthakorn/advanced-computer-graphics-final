@@ -3,14 +3,17 @@
 #include "Engine/Shader/Shader.hpp"
 #include "Engine/Transform.hpp"
 #include "Engine/Camera.hpp"
-#include "Engine/Light.hpp"
+#include "Engine/Light/PointLight.hpp"
+#include "Engine/Light/DirectionalLight.hpp"
 
 #include <memory>
+
 class Material {
 public:
     struct PerFrameContext {
         const Camera& camera;
-        const std::vector<Light>& lights;
+        const std::vector<PointLight>& lights;
+        const DirectionalLight& directionalLight;
     };
 
     struct PerObjectContext {

@@ -64,6 +64,11 @@ void Shader::uniformMat4(const std::string& name, const glm::mat4& value) {
     glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
+void Shader::bindTexture(int slot, int id) {
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D, id);
+}
+
 unsigned int Shader::compile(GLenum type, const std::string &source) {
     const char* sourceCStr = source.c_str();
     

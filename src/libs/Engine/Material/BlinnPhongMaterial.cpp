@@ -20,9 +20,8 @@ void BlinnPhongMaterial::bindPerFrame(const Material::PerFrameContext& context) 
     this->shader->uniformMat4("projection", context.camera.getProjection());
     
     this->shader->uniformVec3("light.position", context.lights[0].position);
-    this->shader->uniformFloat("light.ambient", context.lights[0].ambient);
-    this->shader->uniformFloat("light.diffuse", context.lights[0].diffuse);
-    this->shader->uniformFloat("light.specular", context.lights[0].specular);
+    this->shader->uniformVec3("light.color", context.lights[0].color);
+    this->shader->uniformFloat("light.intensity", context.lights[0].intensity);
     
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, this->texture->id);

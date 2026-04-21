@@ -6,7 +6,7 @@
 
 void Renderer::clearScreen() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 }
 
 void Renderer::draw(
@@ -14,18 +14,19 @@ void Renderer::draw(
     const Camera& camera
 ) {
     // Draw Object
-    std::sort(scene.sceneObjects.begin(), scene.sceneObjects.end(),
+    // Copy vector to keep original order 
+    std::vector<SceneObject> sceneObjects(scene.sceneObjects.begin(), scene.sceneObjects.end());
+    std::sort(sceneObjects.begin(), sceneObjects.end(),
         [](const auto& a, const auto& b) {
             return a.material.get() < b.material.get();
         });
 
     Material* lastMaterial = nullptr;
-    for (auto& sceneObject : scene.sceneObjects) {
-
+    for (auto& sceneObject : sceneObjects) {
         // Bind view once for the same material
         Material* mat = sceneObject.material.get();
         if (mat != lastMaterial) {
-            mat->bindPerFrame({ camera, scene.lights });
+            mat->bindPerFrame({ camera, scene.lights, scene.directionalLight });
             lastMaterial = mat;
         }
         

@@ -13,6 +13,7 @@ Window::Window(const int width, const int height, const std::string& title) {
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     if (!(handle = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr))) {
         std::cerr << "GLFW window creation failed" << std::endl;
@@ -25,6 +26,8 @@ Window::Window(const int width, const int height, const std::string& title) {
     glfwMakeContextCurrent(handle);
     glewExperimental = GL_TRUE;
 
+    glfwSwapInterval(0); // Close V-Sync
+
     if (glewInit() != GLEW_OK) {
         std::cerr << "GLEW init failed" << std::endl;
         glfwDestroyWindow(handle);
@@ -33,6 +36,7 @@ Window::Window(const int width, const int height, const std::string& title) {
     }
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);  
 
     glViewport(0, 0, buf_w, buf_h);
 }

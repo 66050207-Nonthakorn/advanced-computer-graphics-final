@@ -1,0 +1,158 @@
+#version 330 core
+
+struct Material {
+    sampler2D albedo;
+    sampler2D ao;
+    sampler2D metallic;
+    sampler2D normal;
+    sampler2D roughness;
+};
+
+struct PointLight {
+    vec3 position;
+    vec3 color;
+    float intensity;
+};
+
+struct DirectionalLight {
+    vec3 direction;
+    vec3 color;
+    float intensity;
+};
+
+const float PI = 3.14159265359;
+const int MAX_LIGHT = 10;
+
+in vec3 normal;
+in vec3 worldPosition;
+in vec2 uv;
+
+out vec4 fragColor;
+
+uniform vec3 viewPosition;
+uniform float normalStrength;
+uniform Material material;
+
+uniform int pointLightCount;
+uniform PointLight pointLights[MAX_LIGHT];
+uniform DirectionalLight directionalLight;
+
+vec3 getNormalFromMap() {
+    vec3 tangentNormal = texture(material.normal, uv).xyz * 2.0 - 1.0;
+    tangentNormal.xy *= normalStrength;
+
+    vec3 Q1  = dFdx(worldPosition);
+    vec3 Q2  = dFdy(worldPosition);
+    vec2 st1 = dFdx(uv);
+    vec2 st2 = dFdy(uv);
+
+    vec3 N = normalize(normal);
+    
+    vec3 T = Q1 * st2.y - Q2 * st1.y;
+    T = normalize(T);
+    T = normalize(T - dot(T, N) * N); // Gram-Schmidt orthogonalization
+    
+    float det = (st1.x * st2.y - st2.x * st1.y);
+    vec3 B = normalize(cross(T, N)) * (det < 0.0 ? -1.0 : 1.0);
+
+    mat3 TBN = mat3(T, B, N);
+    return normalize(TBN * tangentNormal);
+}
+
+float distributionGGX(vec3 N, vec3 H, float roughness) {
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    return a2 / (PI * denom * denom);
+}
+
+float geometrySchlickGGX(float NdotV, float roughness) {
+    float r = roughness + 1.0;
+    float k = (r * r) / 8.0;
+
+    return NdotV / (NdotV * (1.0 - k) + k);
+}
+
+float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
+    float ggx1 = geometrySchlickGGX(max(dot(N, V), 0.0), roughness);
+    float ggx2 = geometrySchlickGGX(max(dot(N, L), 0.0), roughness);
+    return ggx1 * ggx2;
+}
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0) {
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+void main() {
+    vec3  albedo     = pow(texture(material.albedo, uv).rgb, vec3(2.2));
+    float metallic   = texture(material.metallic, uv).r;
+    float roughness  = texture(material.roughness, uv).r;
+    float ao         = texture(material.ao, uv).r;
+
+    vec3 N = getNormalFromMap();
+    vec3 V = normalize(viewPosition - worldPosition);
+
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, albedo, metallic);
+
+    // Outgoing light accumulated
+    vec3 Lo = vec3(0.0);
+    for(int i = 0; i < pointLightCount; i++) {
+        vec3 L = normalize(pointLights[i].position - worldPosition);
+        vec3 H = normalize(V + L);
+
+        float dist = length(pointLights[i].position - worldPosition);
+        float attenuation = 1.0 / (dist * dist);
+        vec3 radiance = pointLights[i].color * pointLights[i].intensity * attenuation;
+
+        // BRDF
+        float D = distributionGGX(N, H, roughness);
+        float G = geometrySmith(N, V, L, roughness);
+        vec3  F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+        vec3 numerator = D * G * F;
+        float denom = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+        vec3 specular = numerator / denom;
+
+        // Energy conservation
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metallic;
+
+        float NdotL = max(dot(N, L), 0.0);
+
+        // Accumulate
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+    }
+
+    // Directional light contribution
+    {
+        vec3 L = normalize(-directionalLight.direction);
+        vec3 H = normalize(V + L);
+        vec3 radiance = directionalLight.color * directionalLight.intensity;
+
+        float D = distributionGGX(N, H, roughness);
+        float G = geometrySmith(N, V, L, roughness);
+        vec3  F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+        vec3 numerator = D * G * F;
+        float denom = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+        vec3 specular = numerator / denom;
+
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metallic;
+
+        float NdotL = max(dot(N, L), 0.0);
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+    }
+
+    // Cheap IBL approximation
+    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 color = ambient + Lo;
+    color = color / (color + vec3(1.0)); // HDR Tonemapping (Reinhard)
+    color = pow(color, vec3(1.0 / 2.2)); // Gamma correction
+ 
+    fragColor = vec4(color, 1.0);
+}

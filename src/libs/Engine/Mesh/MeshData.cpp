@@ -1,7 +1,16 @@
 #include "Engine/Mesh/MeshData.hpp"
 #include <cmath>
 
-static constexpr float PI = 3.14159265358979323846f;
+MeshData MeshData::Factory::createTriangle() {
+    MeshData meshData;
+    meshData.vertices = {
+        {{ 0,  1, 0}, {0, 0, 1}, {0.5, 1}},
+        {{ 1, -1, 0}, {0, 0, 1}, {  1, 0}},
+        {{-1, -1, 0}, {0, 0, 1}, {  0, 0}},
+    };
+    meshData.indices = { 0, 1, 2 };
+    return meshData;
+}
 
 MeshData MeshData::Factory::createCube() {
     MeshData meshData;
@@ -50,19 +59,22 @@ MeshData MeshData::Factory::createCube() {
     return meshData;
 }
 
-MeshData MeshData::Factory::createTriangle() {
+MeshData MeshData::Factory::createPlane() {
     MeshData meshData;
     meshData.vertices = {
-        {{ 0,  1, 0}, {0, 0, 1}, {0.5, 1}},
-        {{ 1, -1, 0}, {0, 0, 1}, {  1, 0}},
-        {{-1, -1, 0}, {0, 0, 1}, {  0, 0}},
+        {{-0.5, 0.0, -0.5}, {0, 1, 0}, {0, 0}},
+        {{ 0.5, 0.0, -0.5}, {0, 1, 0}, {1, 0}},
+        {{ 0.5, 0.0,  0.5}, {0, 1, 0}, {1, 1}},
+        {{-0.5, 0.0,  0.5}, {0, 1, 0}, {0, 1}},
     };
-    meshData.indices = { 0, 1, 2 };
+    meshData.indices = { 0, 1, 2, 2, 3, 0 };
+
     return meshData;
 }
 
 MeshData MeshData::Factory::createSphere(int stacks, int slices) {
     MeshData meshData;
+    static constexpr float PI = 3.14159265358979323846f;
 
     for (int i = 0; i <= stacks; ++i) {
         float phi = PI * i / stacks; // 0 .. pi

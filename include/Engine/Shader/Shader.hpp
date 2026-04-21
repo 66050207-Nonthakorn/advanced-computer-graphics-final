@@ -21,6 +21,8 @@ public:
     void uniformVec4(const std::string &name, const glm::vec4 &value);
     void uniformMat4(const std::string &name, const glm::mat4 &value);
 
+    void bindTexture(int slot, int id);
+
 private:
     unsigned int program;
     unsigned int compile(GLenum type, const std::string& source);

@@ -8,8 +8,10 @@ struct MeshData {
     std::vector<unsigned int> indices;
 
     struct Factory {
-        static MeshData createCube();
         static MeshData createTriangle();
+
+        static MeshData createCube();
+        static MeshData createPlane();
         static MeshData createSphere(int stacks = 32, int slices = 32);
     };
 };

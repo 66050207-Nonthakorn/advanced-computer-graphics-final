@@ -14,7 +14,6 @@ std::shared_ptr<Mesh> MeshManager::get(const std::string &name) {
     }
 
     MeshData data;
-    
     if (name == "cube") {
         data = MeshData::Factory::createCube();
     }
@@ -24,8 +23,11 @@ std::shared_ptr<Mesh> MeshManager::get(const std::string &name) {
     else if (name == "sphere") {
         data = MeshData::Factory::createSphere();
     }
+    else if (name == "plane") {
+        data = MeshData::Factory::createPlane();
+    }
     else {
-        std::cerr << "[MeshManager] Mesh named" << name << "not found " << std::endl;
+        std::cerr << "[MeshManager] Mesh named " << name << " not found " << std::endl;
         exit(1);
     }
 
