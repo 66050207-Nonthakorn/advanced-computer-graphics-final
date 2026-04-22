@@ -3,18 +3,28 @@
 #include "Engine/Mesh/MeshManager.hpp"
 #include "Engine/Material/MaterialManager.hpp"
 #include "Engine/Light/PointLight.hpp"
+#include "Engine/Manager/InputManager.hpp"
 
 #include "glfw/glfw3.h"
 
 #include <iostream>
 
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
+const std::string SCREEN_TITLE = "Advanced Computer Graphics Final";
+
+float yaw = -90, pitch = 0, sensitivity = 0.2f;
+float speed = 10.0f;
+
 MainScene::MainScene() {
+    camera = Camera(60.0f, static_cast<float>(SCREEN_WIDTH) / SCREEN_HEIGHT, 0.1f, 100.0f);
+
     SceneObject object;
     object.mesh = MeshManager::instance().get("sphere");
     object.material = MaterialManager::instance().get("cloth");
 
     SceneObject object2;
-    object2.transform.setPosition({2, 0, 0});
+    object2.transform.setPosition({2, 1, 0});
     object2.mesh = MeshManager::instance().get("sphere");
     object2.material = MaterialManager::instance().get("brass");
 
@@ -30,7 +40,7 @@ MainScene::MainScene() {
     light.color = {1.0, 1.0, 1.0};
     light.intensity = 7.0f;
 
-    this->directionalLight.direction = glm::normalize(glm::vec3(1.0f, -1.0f, -0.5f));
+    this->directionalLight.direction = glm::normalize(glm::vec3(-1.0f, -1.0f, -0.5f));
     this->directionalLight.color = glm::vec3(1.0f, 1.0f, 1.0f);
     this->directionalLight.intensity = 10.0f;
 
@@ -42,6 +52,39 @@ MainScene::MainScene() {
 }
 
 void MainScene::update(float dt) {
+    glm::vec2 mouseDelta = InputManager::instance().getMouseDelta();
+    yaw += mouseDelta.x * sensitivity;
+    pitch -= mouseDelta.y * sensitivity;
+    pitch = glm::clamp(pitch, -89.0f, 89.0f);
+
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+    glm::vec3 right = glm::normalize(glm::cross(front, glm::vec3(0, 1, 0)));
+    glm::vec3 up = glm::normalize(glm::cross(right, front));
+
+    if (InputManager::instance().isKeyPressed(GLFW_KEY_W)) {
+        camera.position += speed * front * dt;
+    }
+    if (InputManager::instance().isKeyPressed(GLFW_KEY_S)) {
+        camera.position -= speed * front * dt;
+    }
+    if (InputManager::instance().isKeyPressed(GLFW_KEY_A)) {
+        camera.position -= speed * right * dt;
+    }
+    if (InputManager::instance().isKeyPressed(GLFW_KEY_D)) {
+        camera.position += speed * right * dt;
+    }
+    if (InputManager::instance().isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+        camera.position -= speed * up * dt;
+    }
+    if (InputManager::instance().isKeyPressed(GLFW_KEY_SPACE)) {
+        camera.position += speed * up * dt;
+    }
+
+    camera.target = camera.position + glm::normalize(front);
     // auto rotate = sceneObjects[0].transform.getRotation();
     sceneObjects[0].transform.setRotation({glfwGetTime() * 20.0f, glfwGetTime() * 20.0f, glfwGetTime() * 20.0f});
 }

@@ -37,6 +37,9 @@ uniform int pointLightCount;
 uniform PointLight pointLights[MAX_LIGHT];
 uniform DirectionalLight directionalLight;
 
+uniform sampler2D shadowMap;
+uniform mat4 lightSpaceMatrix;
+
 vec3 getNormalFromMap() {
     vec3 tangentNormal = texture(material.normal, uv).xyz * 2.0 - 1.0;
     tangentNormal.xy *= normalStrength;
@@ -84,6 +87,31 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+float shadowCalculation(vec4 fragPosLightSpace, vec3 N, vec3 L) {
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+
+    if (projCoords.z > 1.0) {
+        return 0.0;
+    }
+
+    float currentDepth = projCoords.z;
+    float bias = max(0.05 * (1.0 - dot(N, L)), 0.005);
+
+    // PCF
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 9.0;
+
+    return shadow;
 }
 
 void main() {
@@ -145,7 +173,11 @@ void main() {
         kD *= 1.0 - metallic;
 
         float NdotL = max(dot(N, L), 0.0);
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+
+        vec4 fragPosLightSpace = lightSpaceMatrix * vec4(worldPosition, 1.0);
+        float shadow = shadowCalculation(fragPosLightSpace, N, L);
+
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
     }
 
     // Cheap IBL approximation

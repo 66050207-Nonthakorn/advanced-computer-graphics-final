@@ -6,6 +6,7 @@
 #include "Engine/Light/PointLight.hpp"
 #include "Engine/Light/DirectionalLight.hpp"
 
+#include "glm/glm.hpp"
 #include <memory>
 
 class Material {
@@ -14,6 +15,8 @@ public:
         const Camera& camera;
         const std::vector<PointLight>& lights;
         const DirectionalLight& directionalLight;
+        unsigned int dirShadowMap;
+        glm::mat4 lightSpaceMatrix;
     };
 
     struct PerObjectContext {

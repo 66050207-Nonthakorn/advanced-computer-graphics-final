@@ -26,7 +26,7 @@ Window::Window(const int width, const int height, const std::string& title) {
     glfwMakeContextCurrent(handle);
     glewExperimental = GL_TRUE;
 
-    glfwSwapInterval(0); // Close V-Sync
+    glfwSwapInterval(0); // Disable V-Sync
 
     if (glewInit() != GLEW_OK) {
         std::cerr << "GLEW init failed" << std::endl;
@@ -67,43 +67,6 @@ void Window::setIsShowCursor(bool isShowCursor) {
     glfwSetInputMode(this->handle, GLFW_CURSOR, mode);
 }
 
-glm::vec2 Window::getMouseInput() const {
-    static double lastFrameX = -1;
-    static double lastFrameY = -1;
-
-    double x, y;
-    glfwGetCursorPos(this->handle, &x, &y);
-
-    if (lastFrameX == -1 && lastFrameY == -1) {
-        lastFrameX = x;
-        lastFrameY = y;
-    }
-
-    glm::vec2 delta(x - lastFrameX, y - lastFrameY);
-    lastFrameX = x;
-    lastFrameY = y;
-
-    return delta;
-}
-
-bool Window::isKeyPressed(int key) const {
-    return glfwGetKey(this->handle, key) == GLFW_PRESS;
-}
-
-bool Window::isKeyPressedOnce(int key) {
-    static bool isPressedLastFrame[512];
-
-    int keyState = glfwGetKey(this->handle, key);
-    
-    if (keyState == GLFW_PRESS) {
-        isPressedLastFrame[key] = true;
-        return false;
-    }
-
-    if (keyState == GLFW_RELEASE && isPressedLastFrame[key]) {
-        isPressedLastFrame[key] = false;
-        return true;
-    }
-
-    return false;
+GLFWwindow* Window::getHandle() const {
+    return handle;
 }

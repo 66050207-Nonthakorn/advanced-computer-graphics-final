@@ -18,9 +18,7 @@ public:
 
     void setIsShowCursor(bool isShowCursor);
 
-    glm::vec2 getMouseInput() const;
-    bool isKeyPressed(int key) const;
-    bool isKeyPressedOnce(int key);
+    GLFWwindow* getHandle() const;
     
 private:
     GLFWwindow* handle;

@@ -10,8 +10,5 @@
 class Renderer {
 public:
     void clearScreen();
-    void draw(
-        Scene& scene,
-        const Camera& camera
-    );
+    void draw(Scene& scene);
 };
