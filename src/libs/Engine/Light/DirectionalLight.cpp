@@ -4,8 +4,6 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
-static const unsigned int SHADOW_MAP_SIZE = 2048;
-
 DirectionalLight::DirectionalLight() {
     glGenTextures(1, &depthMap);
     glBindTexture(GL_TEXTURE_2D, depthMap);

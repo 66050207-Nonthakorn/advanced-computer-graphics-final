@@ -3,6 +3,8 @@
 #include "glm/vec3.hpp"
 #include "glm/glm.hpp"
 
+static const unsigned int SHADOW_MAP_SIZE = 4096;
+
 class DirectionalLight {
 public:
     DirectionalLight();

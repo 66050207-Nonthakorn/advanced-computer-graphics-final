@@ -50,8 +50,9 @@ vec3 getNormalFromMap() {
     vec2 st2 = dFdy(uv);
 
     vec3 N = normalize(normal);
-    
+
     vec3 T = Q1 * st2.y - Q2 * st1.y;
+    if (length(T) < 1e-6) return N; // no UVs — fall back to vertex normal
     T = normalize(T);
     T = normalize(T - dot(T, N) * N); // Gram-Schmidt orthogonalization
     
@@ -103,8 +104,8 @@ float shadowCalculation(vec4 fragPosLightSpace, vec3 N, vec3 L) {
     // PCF
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for (int x = -1; x <= 1; ++x) {
-        for (int y = -1; y <= 1; ++y) {
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
             shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
         }

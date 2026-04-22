@@ -3,9 +3,8 @@
 #include "Engine/Shader/ShaderManager.hpp"
 
 #include "GL/glew.h"
+#include "Engine/Light/DirectionalLight.hpp"
 #include <algorithm>
-
-static const unsigned int SHADOW_MAP_SIZE = 2048;
 
 void Renderer::clearScreen() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

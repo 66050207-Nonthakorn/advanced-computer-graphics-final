@@ -76,13 +76,13 @@ MeshData MeshData::Factory::createSphere(int stacks, int slices) {
     MeshData meshData;
     static constexpr float PI = 3.14159265358979323846f;
 
-    for (int i = 0; i <= stacks; ++i) {
+    for (int i = 0; i <= stacks; i++) {
         float phi = PI * i / stacks; // 0 .. pi
         float y   = std::cos(phi);
         float r   = std::sin(phi);
         float v   = static_cast<float>(i) / stacks;
 
-        for (int j = 0; j <= slices; ++j) {
+        for (int j = 0; j <= slices; j++) {
             float theta = 2.0f * PI * j / slices; // 0 .. 2pi
             float x = r * std::cos(theta);
             float z = r * std::sin(theta);
@@ -92,8 +92,8 @@ MeshData MeshData::Factory::createSphere(int stacks, int slices) {
         }
     }
 
-    for (int i = 0; i < stacks; ++i) {
-        for (int j = 0; j < slices; ++j) {
+    for (int i = 0; i < stacks; i++) {
+        for (int j = 0; j < slices; j++) {
             unsigned int a = i * (slices + 1) + j;
             unsigned int b = a + (slices + 1);
 

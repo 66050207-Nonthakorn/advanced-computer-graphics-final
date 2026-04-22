@@ -19,16 +19,29 @@ void BlinnPhongMaterial::bindPerFrame(const Material::PerFrameContext& context) 
     this->shader->uniformVec3("viewPosition", context.camera.position);
     this->shader->uniformMat4("projection", context.camera.getProjection());
     
-    this->shader->uniformVec3("light.position", context.lights[0].position);
-    this->shader->uniformVec3("light.color", context.lights[0].color);
-    this->shader->uniformFloat("light.intensity", context.lights[0].intensity);
+    this->shader->uniformInt("pointLightCount", (int)context.lights.size());
+    for (size_t i = 0; i < context.lights.size(); i++) {
+        std::string base = "pointLights[" + std::to_string(i) + "]";
+        this->shader->uniformVec3(base + ".position", context.lights[i].position);
+        this->shader->uniformVec3(base + ".color",    context.lights[i].color);
+        this->shader->uniformFloat(base + ".intensity", context.lights[i].intensity);
+    }
     
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, this->texture->id);
 
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, context.dirShadowMap);
+
     this->shader->uniformInt("material.diffuse", 0);
     this->shader->uniformFloat("material.specular", this->specular);
     this->shader->uniformFloat("material.shininess", this->shininess);
+    this->shader->uniformInt("shadowMap", 1);
+    this->shader->uniformMat4("lightSpaceMatrix", context.lightSpaceMatrix);
+
+    this->shader->uniformVec3("directionalLight.direction", context.directionalLight.direction);
+    this->shader->uniformVec3("directionalLight.color", context.directionalLight.color);
+    this->shader->uniformFloat("directionalLight.intensity", context.directionalLight.intensity);
 }
 
 void BlinnPhongMaterial::bindPerObject(const Material::PerObjectContext& context) {

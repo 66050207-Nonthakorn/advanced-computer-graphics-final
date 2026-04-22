@@ -46,6 +46,7 @@ int main() {
 
     // Load texture
     textureManager.loadAsync("dirt", "Textures/dirt.jpg");
+    textureManager.loadAsync("face", "Textures/face.jpg");
     textureManager.loadPBRAsync("cloth",  "Textures/Cloth");
     textureManager.loadPBRAsync("silver", "Textures/Silver");
     textureManager.loadPBRAsync("brass",  "Textures/Brass");
@@ -55,6 +56,7 @@ int main() {
 
     // Add Materials
     materialManager.add("dirt", std::make_shared<BlinnPhongMaterial>(textureManager.get("dirt")));
+    materialManager.add("face", std::make_shared<BlinnPhongMaterial>(textureManager.get("face")));
     materialManager.addPBR("cloth", "cloth");
     materialManager.addPBR("silver", "silver");
     materialManager.addPBR("brass", "brass", 2.0f);

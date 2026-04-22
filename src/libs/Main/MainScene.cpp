@@ -28,12 +28,17 @@ MainScene::MainScene() {
     object2.mesh = MeshManager::instance().get("sphere");
     object2.material = MaterialManager::instance().get("brass");
 
+    SceneObject face;
+    face.transform.setPosition({2, 2, 0});
+    face.transform.setScale({3, 3, 3});
+    face.mesh = MeshManager::instance().getFromFile("Models/face.obj");
+    face.material = MaterialManager::instance().get("face");
+
     SceneObject plane;
     plane.mesh = MeshManager::instance().get("plane");
     plane.material = MaterialManager::instance().get("boulders");
     plane.transform.setPosition({0, -2, 0});
     plane.transform.setScale({10, 1, 10});
-    // plane.
 
     PointLight light;
     light.position = {0.0, 2.5, 0.0};
@@ -47,6 +52,7 @@ MainScene::MainScene() {
     this->sceneObjects.emplace_back(object);
     this->sceneObjects.emplace_back(object2);
     this->sceneObjects.emplace_back(plane);
+    this->sceneObjects.emplace_back(face);
 
     this->lights.emplace_back(light);
 }
