@@ -9,7 +9,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glew CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-file(GLOB_RECURSE SOURCE_FILES
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
   ${CMAKE_SOURCE_DIR}/src/Libs/*.cpp
   ${CMAKE_SOURCE_DIR}/src/main.cpp
 )
@@ -33,6 +33,8 @@ if(APPLE)
     "-framework Cocoa" "-framework IOKit" "-framework CoreVideo"
   )
 endif()
+
+target_compile_options(advanced_computer_graphics_final PRIVATE $<$<CONFIG:Release>:/Ox>)
 
 # Copy shaders next to the binary (runs on every build)
 add_custom_target(copy_shaders ALL

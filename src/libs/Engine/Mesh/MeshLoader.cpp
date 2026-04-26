@@ -1,14 +1,19 @@
 #include "Engine/Mesh/MeshLoader.hpp"
 #include "Engine/Utils/FileUtils.hpp"
 
+#include "glm/glm.hpp"
+#include "GLFW/glfw3.h"
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 #include <iostream>
 
 MeshData MeshLoader::loadFromObj(const std::string &path) {
+    std::cout << "[MeshLoader] loading " << path << std::endl;
+
+    float t = glfwGetTime();
+
     std::string content;
-    
     try {
         content = FileUtils::readFile(path);
     }
@@ -25,23 +30,23 @@ MeshData MeshLoader::loadFromObj(const std::string &path) {
 
     MeshData result;
     std::unordered_map<std::string, unsigned int> indexCache;
+    std::vector<unsigned int> faceIndices;
 
     auto getIndex = [&](const std::string &token) -> unsigned int {
-        auto it = indexCache.find(token);
-        if (it != indexCache.end())
+        // Reserve slot in the map; skip parsing entirely on cache hit
+        auto [it, inserted] = indexCache.try_emplace(token, (unsigned int)result.vertices.size());
+        if (!inserted)
             return it->second;
 
-        // token format: v[/vt[/vn]]
+        // token format: v[/vt[/vn]] — parse with strtol to avoid istringstream overhead
         int vi = 0, ti = 0, ni = 0;
-        char sep;
-        std::istringstream ss(token);
-
-        // Parse position index (required)
-        ss >> vi;
-        if (ss.peek() == '/') {
-            ss >> sep;
-            if (ss.peek() != '/') ss >> ti;
-            if (ss.peek() == '/') { ss >> sep; ss >> ni; }
+        const char* p = token.c_str();
+        char* end;
+        vi = (int)std::strtol(p, &end, 10);
+        if (*end == '/') {
+            p = end + 1;
+            if (*p != '/') { ti = (int)std::strtol(p, &end, 10); p = end; }
+            if (*p == '/')  { ni = (int)std::strtol(p + 1, nullptr, 10); }
         }
 
         Vertex v{};
@@ -58,10 +63,8 @@ MeshData MeshLoader::loadFromObj(const std::string &path) {
             if (idx >= 0 && idx < (int)uvs.size()) v.uv = uvs[idx];
         }
 
-        unsigned int newIndex = static_cast<unsigned int>(result.vertices.size());
-        result.vertices.push_back(v);
-        indexCache[token] = newIndex;
-        return newIndex;
+        result.vertices.emplace_back(v);
+        return it->second;
     };
 
     std::string line;
@@ -75,32 +78,61 @@ MeshData MeshLoader::loadFromObj(const std::string &path) {
         if (keyword == "v") {
             glm::vec3 p;
             ss >> p.x >> p.y >> p.z;
-            positions.push_back(p);
+            positions.emplace_back(p);
         }
         else if (keyword == "vn") {
             glm::vec3 n;
             ss >> n.x >> n.y >> n.z;
-            normals.push_back(n);
+            normals.emplace_back(n);
         }
         else if (keyword == "vt") {
             glm::vec2 t;
             ss >> t.x >> t.y;
-            uvs.push_back(t);
+            uvs.emplace_back(t);
         }
         else if (keyword == "f") {
             // Fan triangulation for polygons with 3+ vertices
-            std::vector<unsigned int> faceIndices;
+            faceIndices.clear();
             std::string token;
             while (ss >> token)
-                faceIndices.push_back(getIndex(token));
+                faceIndices.emplace_back(getIndex(token));
 
             for (size_t i = 1; i + 1 < faceIndices.size(); ++i) {
-                result.indices.push_back(faceIndices[0]);
-                result.indices.push_back(faceIndices[i]);
-                result.indices.push_back(faceIndices[i + 1]);
+                result.indices.emplace_back(faceIndices[0]);
+                result.indices.emplace_back(faceIndices[i]);
+                result.indices.emplace_back(faceIndices[i + 1]);
             }
         }
     }
+
+    // Generate flat normals for OBJ exported without vn
+    bool hasNormals = false;
+    for (auto& v : result.vertices) {
+        if (glm::dot(v.normal, v.normal) > 0.0f) {
+            hasNormals = true;
+            break;
+        }
+    }
+
+    if (!hasNormals) {
+        for (size_t i = 0; i + 2 < result.indices.size(); i += 3) {
+            auto& v0 = result.vertices[result.indices[i]];
+            auto& v1 = result.vertices[result.indices[i + 1]];
+            auto& v2 = result.vertices[result.indices[i + 2]];
+            glm::vec3 n = glm::normalize(glm::cross(v1.position - v0.position, v2.position - v0.position));
+            v0.normal += n;
+            v1.normal += n;
+            v2.normal += n;
+        }
+
+        for (auto& v : result.vertices) {
+            if (glm::dot(v.normal, v.normal) > 0.0f) {
+                v.normal = glm::normalize(v.normal);
+            }
+        }
+    }
+
+    std::cout << "[MeshLoader] took " << glfwGetTime() - t << std::endl;
 
     return result;
 }

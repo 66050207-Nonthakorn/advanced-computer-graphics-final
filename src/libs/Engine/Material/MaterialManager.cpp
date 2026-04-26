@@ -15,12 +15,16 @@ void MaterialManager::add(const std::string& name, std::shared_ptr<Material> mat
 
 void MaterialManager::addPBR(const std::string& name, const std::string& texturePrefix, float normalStrength) {
     auto& tex = TextureManager::instance();
+    auto getOptional = [&tex](const std::string& textureName) -> std::shared_ptr<Texture> {
+        return tex.has(textureName) ? tex.get(textureName) : nullptr;
+    };
+
     auto mat = std::make_shared<PBRMaterial>(
-        tex.get(texturePrefix + "-albedo"),
-        tex.get(texturePrefix + "-ao"),
-        tex.get(texturePrefix + "-metallic"),
-        tex.get(texturePrefix + "-normal"),
-        tex.get(texturePrefix + "-roughness")
+        getOptional(texturePrefix + "-albedo"),
+        getOptional(texturePrefix + "-ao"),
+        getOptional(texturePrefix + "-metallic"),
+        getOptional(texturePrefix + "-normal"),
+        getOptional(texturePrefix + "-roughness")
     );
     mat->normalStrength = normalStrength;
     this->materials[name] = std::move(mat);

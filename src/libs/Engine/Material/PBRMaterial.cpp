@@ -13,17 +13,28 @@ PBRMaterial::PBRMaterial(
 void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
     this->shader->use();
 
-    this->shader->bindTexture(0, this->albedo->id);
-    this->shader->bindTexture(1, this->ao->id);
-    this->shader->bindTexture(2, this->metallic->id);
-    this->shader->bindTexture(3, this->normal->id);
-    this->shader->bindTexture(4, this->roughness->id);
+    const bool hasAlbedo = static_cast<bool>(this->albedo);
+    const bool hasAo = static_cast<bool>(this->ao);
+    const bool hasMetallic = static_cast<bool>(this->metallic);
+    const bool hasNormal = static_cast<bool>(this->normal);
+    const bool hasRoughness = static_cast<bool>(this->roughness);
+
+    this->shader->bindTexture(0, hasAlbedo ? this->albedo->getId() : 0);
+    this->shader->bindTexture(1, hasAo ? this->ao->getId() : 0);
+    this->shader->bindTexture(2, hasMetallic ? this->metallic->getId() : 0);
+    this->shader->bindTexture(3, hasNormal ? this->normal->getId() : 0);
+    this->shader->bindTexture(4, hasRoughness ? this->roughness->getId() : 0);
 
     this->shader->uniformInt("material.albedo", 0);
     this->shader->uniformInt("material.ao", 1);
     this->shader->uniformInt("material.metallic", 2);
     this->shader->uniformInt("material.normal", 3);
     this->shader->uniformInt("material.roughness", 4);
+    this->shader->uniformBool("useAlbedoMap", hasAlbedo);
+    this->shader->uniformBool("useAoMap", hasAo);
+    this->shader->uniformBool("useMetallicMap", hasMetallic);
+    this->shader->uniformBool("useNormalMap", hasNormal);
+    this->shader->uniformBool("useRoughnessMap", hasRoughness);
 
     this->shader->uniformMat4("view", context.camera.getView());
     this->shader->uniformMat4("projection", context.camera.getProjection());

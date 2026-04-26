@@ -21,7 +21,7 @@ public:
     void uniformVec4(const std::string &name, const glm::vec4 &value);
     void uniformMat4(const std::string &name, const glm::mat4 &value);
 
-    void bindTexture(int slot, int id);
+    void bindTexture(int slot, unsigned int id, int target = GL_TEXTURE_2D);
 
 private:
     unsigned int program;

@@ -1,12 +1,16 @@
 #pragma once
 
+#include <memory>
 #include <string>
 
-struct Texture {    
-    unsigned int id;
-    int width, height, nrChannels;
+class Texture {    
+public:
+    virtual ~Texture() = default;
 
-    Texture(const std::string& filePath, const int format, const bool isFlip);
-    Texture(unsigned char* data, int width, int height, int nrChannels, const int format);
-    ~Texture();
+    void bind(int slot) const;
+    unsigned int getId() const;
+    virtual int getType() const = 0;
+
+protected:
+    unsigned int id;
 };

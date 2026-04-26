@@ -32,6 +32,11 @@ out vec4 fragColor;
 uniform vec3 viewPosition;
 uniform float normalStrength;
 uniform Material material;
+uniform bool useAlbedoMap;
+uniform bool useAoMap;
+uniform bool useMetallicMap;
+uniform bool useNormalMap;
+uniform bool useRoughnessMap;
 
 uniform int pointLightCount;
 uniform PointLight pointLights[MAX_LIGHT];
@@ -41,6 +46,10 @@ uniform sampler2D shadowMap;
 uniform mat4 lightSpaceMatrix;
 
 vec3 getNormalFromMap() {
+    if (!useNormalMap) {
+        return normalize(normal);
+    }
+
     vec3 tangentNormal = texture(material.normal, uv).xyz * 2.0 - 1.0;
     tangentNormal.xy *= normalStrength;
 
@@ -52,7 +61,6 @@ vec3 getNormalFromMap() {
     vec3 N = normalize(normal);
 
     vec3 T = Q1 * st2.y - Q2 * st1.y;
-    if (length(T) < 1e-6) return N; // no UVs — fall back to vertex normal
     T = normalize(T);
     T = normalize(T - dot(T, N) * N); // Gram-Schmidt orthogonalization
     
@@ -116,10 +124,10 @@ float shadowCalculation(vec4 fragPosLightSpace, vec3 N, vec3 L) {
 }
 
 void main() {
-    vec3  albedo     = pow(texture(material.albedo, uv).rgb, vec3(2.2));
-    float metallic   = texture(material.metallic, uv).r;
-    float roughness  = texture(material.roughness, uv).r;
-    float ao         = texture(material.ao, uv).r;
+    vec3  albedo     = useAlbedoMap ? pow(texture(material.albedo, uv).rgb, vec3(2.2)) : vec3(1.0);
+    float metallic   = useMetallicMap ? texture(material.metallic, uv).r : 0.0;
+    float roughness  = useRoughnessMap ? texture(material.roughness, uv).r : 1.0;
+    float ao         = useAoMap ? texture(material.ao, uv).r : 1.0;
 
     vec3 N = getNormalFromMap();
     vec3 V = normalize(viewPosition - worldPosition);

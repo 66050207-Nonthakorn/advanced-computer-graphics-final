@@ -26,6 +26,8 @@ public:
     Material(const std::shared_ptr<Shader>& shader);
     virtual void bindPerFrame(const Material::PerFrameContext& context) = 0;
     virtual void bindPerObject(const Material::PerObjectContext& context) = 0;
+    virtual ~Material() = default;
+    
 protected:
     std::shared_ptr<Shader> shader;
 };

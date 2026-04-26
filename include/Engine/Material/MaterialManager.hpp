@@ -14,8 +14,6 @@ public:
     MaterialManager& operator=(const MaterialManager &) = delete;
 
     void add(const std::string& name, std::shared_ptr<Material> material);
-
-    // Builds a PBRMaterial from textures already loaded as "<texturePrefix>-albedo", etc.
     void addPBR(const std::string& name, const std::string& texturePrefix, float normalStrength = 1.0f);
 
     std::shared_ptr<Material> get(const std::string& name);

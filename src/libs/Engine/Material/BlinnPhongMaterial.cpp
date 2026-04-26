@@ -28,7 +28,7 @@ void BlinnPhongMaterial::bindPerFrame(const Material::PerFrameContext& context) 
     }
     
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->texture->id);
+    glBindTexture(GL_TEXTURE_2D, this->texture->getId());
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, context.dirShadowMap);

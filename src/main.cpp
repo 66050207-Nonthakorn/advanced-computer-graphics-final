@@ -10,6 +10,7 @@
 #include "Engine/Manager/InputManager.hpp"
 #include "Engine/Material/BlinnPhongMaterial.hpp"
 #include "Engine/Material/PBRMaterial.hpp"
+#include "Engine/Texture/Texture2D.hpp"
 
 #include "Main/MainScene.hpp"
 
@@ -43,50 +44,53 @@ int main() {
     shaderManager.load("blinn-phong", "Shaders/blinn-phong.vert", "Shaders/blinn-phong.frag");
     shaderManager.load("pbr", "Shaders/pbr.vert", "Shaders/pbr.frag");
     shaderManager.load("shadow", "Shaders/shadow.vert", "Shaders/shadow.frag");
+    shaderManager.load("cubemap", "Shaders/cubemap.vert", "Shaders/cubemap.frag");
 
     // Load texture
-    textureManager.loadAsync("dirt", "Textures/dirt.jpg");
-    textureManager.loadAsync("face", "Textures/face.jpg");
-    textureManager.loadPBRAsync("cloth",  "Textures/Cloth");
-    textureManager.loadPBRAsync("silver", "Textures/Silver");
-    textureManager.loadPBRAsync("brass",  "Textures/Brass");
-    textureManager.loadPBRAsync("marble",  "Textures/Marble");
-    textureManager.loadPBRAsync("boulders",  "Textures/Boulders");
-    textureManager.finalize();
+    textureManager.add("dirt", std::make_shared<Texture2D>("Textures/dirt.jpg"));
+    textureManager.add("face", std::make_shared<Texture2D>("Textures/face.jpg"));
+
+    textureManager.add("room-cubemap", std::make_shared<CubemapTexture>(
+        std::array<std::string, 6>{
+            "Textures/Cubemap/Room/px.png",
+            "Textures/Cubemap/Room/nx.png",
+            "Textures/Cubemap/Room/py.png",
+            "Textures/Cubemap/Room/ny.png",
+            "Textures/Cubemap/Room/pz.png",
+            "Textures/Cubemap/Room/nz.png"
+        }
+    ));
+
+    textureManager.addPBR("cloth",  "Textures/Cloth");
+    textureManager.addPBR("silver", "Textures/Silver");
+    textureManager.addPBR("brass",  "Textures/Brass");
+    textureManager.addPBR("marble",  "Textures/Marble");
+    textureManager.addPBR("boulders",  "Textures/Boulders");
+    textureManager.addPBR("metal",  "Textures/Metal");
 
     // Add Materials
     materialManager.add("dirt", std::make_shared<BlinnPhongMaterial>(textureManager.get("dirt")));
     materialManager.add("face", std::make_shared<BlinnPhongMaterial>(textureManager.get("face")));
+    materialManager.addPBR("default", "default");
     materialManager.addPBR("cloth", "cloth");
     materialManager.addPBR("silver", "silver");
     materialManager.addPBR("brass", "brass", 2.0f);
     materialManager.addPBR("marble", "marble");
     materialManager.addPBR("boulders", "boulders", 0.5f);
+    materialManager.addPBR("metal", "metal");
 
     MainScene mainScene;
 
     float pt = glfwGetTime();
     float lastTime = pt;
-    int frameCount = 0;
 
     while (!window.shouldClose()) {
         window.pollEvent();
         renderer.clearScreen();
 
         float t = glfwGetTime();
-        float currentTime = t;
         float dt = t - pt;
         pt = t;
-        frameCount++;
-
-        if (currentTime - lastTime >= 0.1f) {
-            double fps = frameCount / (currentTime - lastTime);
-
-            std::cout << "FPS: " << fps << std::endl;
-
-            frameCount = 0;
-            lastTime = currentTime;
-        }
 
         if (InputManager::instance().isKeyPressedOnce(GLFW_KEY_ESCAPE)) {
             window.close();

@@ -5,6 +5,8 @@
 #include "GL/glew.h"
 #include "Engine/Light/DirectionalLight.hpp"
 #include <algorithm>
+#include "glm/mat4x4.hpp"
+#include "glm/mat3x3.hpp"
 
 void Renderer::clearScreen() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -12,7 +14,7 @@ void Renderer::clearScreen() {
 }
 
 void Renderer::draw(Scene& scene) {
-    // --- Shadow pass ---
+    // Shadow pass
     glm::mat4 lightSpaceMat = scene.directionalLight.getLightSpaceMatrix();
     auto shadowShader = ShaderManager::instance().get("shadow");
 
@@ -36,7 +38,7 @@ void Renderer::draw(Scene& scene) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-    // --- Lighting pass ---
+    // Lighting pass
     std::vector<SceneObject> sceneObjects(scene.sceneObjects.begin(), scene.sceneObjects.end());
     std::sort(sceneObjects.begin(), sceneObjects.end(),
         [](const auto& a, const auto& b) {
@@ -56,5 +58,24 @@ void Renderer::draw(Scene& scene) {
         
         glBindVertexArray(sceneObject.mesh->vao);
         glDrawElements(GL_TRIANGLES, sceneObject.mesh->indexCount, GL_UNSIGNED_INT, 0);
+    }
+
+    // Cubemap
+    if (scene.cubemap.get() != nullptr) {
+        auto cubemapShader = ShaderManager::instance().get("cubemap");
+        cubemapShader->use();
+        cubemapShader->uniformMat4("view", glm::mat4(glm::mat3(scene.camera.getView())));
+        cubemapShader->uniformMat4("projection", scene.camera.getProjection());
+        cubemapShader->uniformInt("skybox", 0);
+
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_FALSE);
+
+        scene.cubemap->texture->bind(0);
+        glBindVertexArray(scene.cubemap->cube->vao);
+        glDrawElements(GL_TRIANGLES, scene.cubemap->cube->indexCount, GL_UNSIGNED_INT, 0);
+
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
     }
 }
