@@ -28,6 +28,7 @@ out vec4 fragColor;
 
 uniform vec3 viewPosition;
 uniform Material material;
+uniform bool useTexture;
 
 uniform int pointLightCount;
 uniform Light pointLights[10];
@@ -61,7 +62,7 @@ void main() {
     vec3 N = normalize(normal);
     vec3 V = normalize(viewPosition - worldPosition);
 
-    vec4 texColor = texture(material.diffuse, uv);
+    vec4 texColor = useTexture ? texture(material.diffuse, uv) : vec4(1.0);
     vec3 ambient = 0.1 * texColor.rgb;
 
     vec3 Lo = vec3(0.0);

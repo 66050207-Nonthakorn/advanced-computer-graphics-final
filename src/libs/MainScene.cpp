@@ -20,14 +20,20 @@ float speed = 10.0f;
 MainScene::MainScene() {
     camera = Camera(60.0f, static_cast<float>(SCREEN_WIDTH) / SCREEN_HEIGHT, 0.1f, 100.0f);
 
+    // IBL
+    cubemap.iblIrradianceMap = TextureManager::instance().get("sky-ibl-irradiance");
+    cubemap.iblBrdfLUT       = TextureManager::instance().get("brdf-lut-512");
+    cubemap.iblPrefilterMap  = TextureManager::instance().get("sky-ibl-prefilter");
+    cubemap.iblPrefilterMips = 5;
+
     SceneObject object;
     object.mesh = MeshManager::instance().get("sphere");
-    object.material = MaterialManager::instance().get("cloth");
+    object.material = MaterialManager::instance().get("brass");
 
     SceneObject object2;
     object2.transform.setPosition({2, 1, 0});
     object2.mesh = MeshManager::instance().get("sphere");
-    object2.material = MaterialManager::instance().get("default");
+    object2.material = MaterialManager::instance().get("marble");
 
     SceneObject face;
     face.transform.setPosition({2, 2, 0});

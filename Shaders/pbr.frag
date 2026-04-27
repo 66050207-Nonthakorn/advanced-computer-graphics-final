@@ -45,6 +45,13 @@ uniform DirectionalLight directionalLight;
 uniform sampler2D shadowMap;
 uniform mat4 lightSpaceMatrix;
 
+// IBL
+uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+uniform sampler2D   brdfLUT;
+uniform float iblPrefilterMaxLod;
+uniform bool useIBL;
+
 vec3 getNormalFromMap() {
     if (!useNormalMap) {
         return normalize(normal);
@@ -96,6 +103,11 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+// Fresnel with roughness bias — used for IBL ambient term
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 float shadowCalculation(vec4 fragPosLightSpace, vec3 N, vec3 L) {
@@ -189,8 +201,28 @@ void main() {
         Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
     }
 
-    // Cheap IBL approximation
-    vec3 ambient = vec3(0.03) * albedo * ao;
+    // Ambient / IBL
+    vec3 ambient;
+    if (useIBL) {
+        float NdotV = max(dot(N, V), 0.0);
+        vec3 F_ibl = fresnelSchlickRoughness(NdotV, F0, roughness);
+        vec3 kD_ibl = (1.0 - F_ibl) * (1.0 - metallic);
+
+        // Diffuse — sample irradiance map with surface normal
+        vec3 irradiance = texture(irradianceMap, N).rgb;
+        vec3 diffuseIBL = kD_ibl * irradiance * albedo;
+
+        // Specular — sample prefiltered env map at roughness LOD
+        vec3 R = reflect(-V, N);
+        vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * iblPrefilterMaxLod).rgb;
+        vec2 brdf = texture(brdfLUT, vec2(NdotV, roughness)).rg;
+        vec3 specularIBL = prefilteredColor * (F_ibl * brdf.x + brdf.y);
+
+        ambient = (diffuseIBL + specularIBL) * ao;
+    } else {
+        ambient = vec3(0.03) * albedo * ao;
+    }
+
     vec3 color = ambient + Lo;
     color = color / (color + vec3(1.0)); // HDR Tonemapping (Reinhard)
     color = pow(color, vec3(1.0 / 2.2)); // Gamma correction

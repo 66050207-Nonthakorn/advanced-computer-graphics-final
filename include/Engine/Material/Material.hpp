@@ -17,6 +17,12 @@ public:
         const DirectionalLight& directionalLight;
         unsigned int dirShadowMap;
         glm::mat4 lightSpaceMatrix;
+        
+        // IBL — zero means not available
+        unsigned int iblIrradianceMap = 0;
+        unsigned int iblPrefilterMap = 0;
+        int iblPrefilterMips = 0;
+        unsigned int iblBrdfLUT = 0;
     };
 
     struct PerObjectContext {

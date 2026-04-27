@@ -4,7 +4,7 @@
 #include "Engine/Light/DirectionalLight.hpp"
 #include "Engine/Light/PointLight.hpp"
 #include "Engine/Camera.hpp"
-#include "Engine/Cubemap.hpp"
+#include "Engine/HDRCubemap.hpp"
 #include "Engine/Texture/TextureManager.hpp"
 
 #include <vector>
@@ -18,7 +18,7 @@ struct Scene {
     std::vector<PointLight> lights;
     DirectionalLight directionalLight;
     
-    std::unique_ptr<Cubemap> cubemap = std::make_unique<Cubemap>(TextureManager::instance().get("room-cubemap"));
+    HDRCubemap cubemap;
 
     virtual void update(float dt) = 0;
 };

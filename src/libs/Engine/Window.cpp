@@ -26,7 +26,7 @@ Window::Window(const int width, const int height, const std::string& title) {
     glfwMakeContextCurrent(handle);
     glewExperimental = GL_TRUE;
 
-    glfwSwapInterval(0); // Disable V-Sync
+    // glfwSwapInterval(0); // Disable V-Sync
 
     if (glewInit() != GLEW_OK) {
         std::cerr << "GLEW init failed" << std::endl;

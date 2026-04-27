@@ -27,12 +27,11 @@ void BlinnPhongMaterial::bindPerFrame(const Material::PerFrameContext& context) 
         this->shader->uniformFloat(base + ".intensity", context.lights[i].intensity);
     }
     
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->texture->getId());
+    const bool hasTexture = static_cast<bool>(this->texture);
+    this->shader->bindTexture(0, hasTexture ? this->texture->getId() : 0);
+    this->shader->bindTexture(1, context.dirShadowMap);
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, context.dirShadowMap);
-
+    this->shader->uniformBool("useTexture", hasTexture);
     this->shader->uniformInt("material.diffuse", 0);
     this->shader->uniformFloat("material.specular", this->specular);
     this->shader->uniformFloat("material.shininess", this->shininess);

@@ -1,5 +1,6 @@
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Shader/ShaderManager.hpp"
+#include "GL/glew.h"
 
 PBRMaterial::PBRMaterial(
     const std::shared_ptr<Texture>& albedo,
@@ -56,6 +57,27 @@ void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
     this->shader->bindTexture(5, context.dirShadowMap);
     this->shader->uniformInt("shadowMap", 5);
     this->shader->uniformMat4("lightSpaceMatrix", context.lightSpaceMatrix);
+
+    // IBL
+    const bool useIBL = context.iblIrradianceMap != 0 && context.iblPrefilterMap != 0
+                        && context.iblBrdfLUT != 0;
+    this->shader->uniformBool("useIBL", useIBL);
+    if (useIBL) {
+        glActiveTexture(GL_TEXTURE6);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, context.iblIrradianceMap);
+        this->shader->uniformInt("irradianceMap", 6);
+
+        glActiveTexture(GL_TEXTURE7);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, context.iblPrefilterMap);
+        this->shader->uniformInt("prefilterMap", 7);
+
+        glActiveTexture(GL_TEXTURE8);
+        glBindTexture(GL_TEXTURE_2D, context.iblBrdfLUT);
+        this->shader->uniformInt("brdfLUT", 8);
+
+        this->shader->uniformFloat("iblPrefilterMaxLod",
+            static_cast<float>(context.iblPrefilterMips - 1));
+    }
 
     this->shader->uniformFloat("normalStrength", this->normalStrength);
 }

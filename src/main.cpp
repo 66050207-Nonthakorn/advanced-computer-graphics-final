@@ -6,11 +6,13 @@
 #include "Engine/Mesh/MeshManager.hpp"
 #include "Engine/Shader/ShaderManager.hpp"
 #include "Engine/Texture/TextureManager.hpp"
+#include "Engine/Texture/HDRCubemapTexture.hpp"
 #include "Engine/Material/MaterialManager.hpp"
 #include "Engine/Manager/InputManager.hpp"
 #include "Engine/Material/BlinnPhongMaterial.hpp"
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Texture/Texture2D.hpp"
+#include "Engine/Texture/BRDFLUTTexture.hpp"
 
 #include "Main/MainScene.hpp"
 
@@ -45,21 +47,71 @@ int main() {
     shaderManager.load("pbr", "Shaders/pbr.vert", "Shaders/pbr.frag");
     shaderManager.load("shadow", "Shaders/shadow.vert", "Shaders/shadow.frag");
     shaderManager.load("cubemap", "Shaders/cubemap.vert", "Shaders/cubemap.frag");
+    shaderManager.load("brdf", "Shaders/brdf.vert", "Shaders/brdf.frag");
 
     // Load texture
     textureManager.add("dirt", std::make_shared<Texture2D>("Textures/dirt.jpg"));
     textureManager.add("face", std::make_shared<Texture2D>("Textures/face.jpg"));
 
-    textureManager.add("room-cubemap", std::make_shared<CubemapTexture>(
+    // IBL — irradiance cubemap (diffuse)
+    textureManager.add("sky-ibl-irradiance", std::make_shared<HDRCubemapTexture>(
         std::array<std::string, 6>{
-            "Textures/Cubemap/Room/px.png",
-            "Textures/Cubemap/Room/nx.png",
-            "Textures/Cubemap/Room/py.png",
-            "Textures/Cubemap/Room/ny.png",
-            "Textures/Cubemap/Room/pz.png",
-            "Textures/Cubemap/Room/nz.png"
+            "Textures/Cubemap/Sky/px.hdr",
+            "Textures/Cubemap/Sky/nx.hdr",
+            "Textures/Cubemap/Sky/py.hdr",
+            "Textures/Cubemap/Sky/ny.hdr",
+            "Textures/Cubemap/Sky/pz.hdr",
+            "Textures/Cubemap/Sky/nz.hdr"
         }
     ));
+
+    // IBL — prefiltered specular cubemap (mip 0 = sharp, mip 3 = rough)
+    textureManager.add("sky-ibl-prefilter", std::make_shared<HDRCubemapTexture>(
+        std::vector<std::array<std::string, 6>>{
+            { // mip 0
+                "Textures/Cubemap/Sky/m0_px.hdr",
+                "Textures/Cubemap/Sky/m0_nx.hdr",
+                "Textures/Cubemap/Sky/m0_py.hdr",
+                "Textures/Cubemap/Sky/m0_ny.hdr",
+                "Textures/Cubemap/Sky/m0_pz.hdr",
+                "Textures/Cubemap/Sky/m0_nz.hdr"
+            },
+            { // mip 1
+                "Textures/Cubemap/Sky/m1_px.hdr",
+                "Textures/Cubemap/Sky/m1_nx.hdr",
+                "Textures/Cubemap/Sky/m1_py.hdr",
+                "Textures/Cubemap/Sky/m1_ny.hdr",
+                "Textures/Cubemap/Sky/m1_pz.hdr",
+                "Textures/Cubemap/Sky/m1_nz.hdr"
+            },
+            { // mip 2
+                "Textures/Cubemap/Sky/m2_px.hdr",
+                "Textures/Cubemap/Sky/m2_nx.hdr",
+                "Textures/Cubemap/Sky/m2_py.hdr",
+                "Textures/Cubemap/Sky/m2_ny.hdr",
+                "Textures/Cubemap/Sky/m2_pz.hdr",
+                "Textures/Cubemap/Sky/m2_nz.hdr"
+            },
+            { // mip 3
+                "Textures/Cubemap/Sky/m3_px.hdr",
+                "Textures/Cubemap/Sky/m3_nx.hdr",
+                "Textures/Cubemap/Sky/m3_py.hdr",
+                "Textures/Cubemap/Sky/m3_ny.hdr",
+                "Textures/Cubemap/Sky/m3_pz.hdr",
+                "Textures/Cubemap/Sky/m3_nz.hdr"
+            },
+            { // mip 4
+                "Textures/Cubemap/Sky/m4_px.hdr",
+                "Textures/Cubemap/Sky/m4_nx.hdr",
+                "Textures/Cubemap/Sky/m4_py.hdr",
+                "Textures/Cubemap/Sky/m4_ny.hdr",
+                "Textures/Cubemap/Sky/m4_pz.hdr",
+                "Textures/Cubemap/Sky/m4_nz.hdr"
+            }
+        }
+    ));
+
+    textureManager.add("brdf-lut-512", std::make_shared<BRDFLUTTexture>(512));
 
     textureManager.addPBR("cloth",  "Textures/Cloth");
     textureManager.addPBR("silver", "Textures/Silver");

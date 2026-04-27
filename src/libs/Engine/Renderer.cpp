@@ -49,8 +49,14 @@ void Renderer::draw(Scene& scene) {
     for (auto& sceneObject : sceneObjects) {
         Material* mat = sceneObject.material.get();
         if (mat != lastMaterial) {
+            unsigned int iblIrr  = scene.cubemap.iblIrradianceMap ? scene.cubemap.iblIrradianceMap->getId() : 0;
+            unsigned int iblPref = scene.cubemap.iblPrefilterMap  ? scene.cubemap.iblPrefilterMap->getId()  : 0;
+            unsigned int iblLUT  = scene.cubemap.iblBrdfLUT       ? scene.cubemap.iblBrdfLUT->getId()       : 0;
+            int iblMips = scene.cubemap.iblPrefilterMips;
+
             mat->bindPerFrame({ scene.camera, scene.lights, scene.directionalLight,
-                                scene.directionalLight.getDepthMapID(), lightSpaceMat });
+                                scene.directionalLight.getDepthMapID(), lightSpaceMat,
+                                iblIrr, iblPref, iblMips, iblLUT });
             lastMaterial = mat;
         }
         
@@ -61,19 +67,19 @@ void Renderer::draw(Scene& scene) {
     }
 
     // Cubemap
-    if (scene.cubemap.get() != nullptr) {
+    if (scene.cubemap.iblIrradianceMap != nullptr) {
         auto cubemapShader = ShaderManager::instance().get("cubemap");
         cubemapShader->use();
-        cubemapShader->uniformMat4("view", glm::mat4(glm::mat3(scene.camera.getView())));
+        cubemapShader->uniformMat4("view", scene.camera.getView());
         cubemapShader->uniformMat4("projection", scene.camera.getProjection());
         cubemapShader->uniformInt("skybox", 0);
 
         glDepthFunc(GL_LEQUAL);
         glDepthMask(GL_FALSE);
 
-        scene.cubemap->texture->bind(0);
-        glBindVertexArray(scene.cubemap->cube->vao);
-        glDrawElements(GL_TRIANGLES, scene.cubemap->cube->indexCount, GL_UNSIGNED_INT, 0);
+        scene.cubemap.iblIrradianceMap->bind(0);
+        glBindVertexArray(scene.cubemap.cube->vao);
+        glDrawElements(GL_TRIANGLES, scene.cubemap.cube->indexCount, GL_UNSIGNED_INT, 0);
 
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
