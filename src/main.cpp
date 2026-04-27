@@ -119,6 +119,7 @@ int main() {
     textureManager.addPBR("marble",  "Textures/Marble");
     textureManager.addPBR("boulders",  "Textures/Boulders");
     textureManager.addPBR("metal",  "Textures/Metal");
+    textureManager.addPBR("gold",  "Textures/Gold");
 
     // Add Materials
     materialManager.add("dirt", std::make_shared<BlinnPhongMaterial>(textureManager.get("dirt")));
@@ -130,7 +131,7 @@ int main() {
     materialManager.addPBR("marble", "marble");
     materialManager.addPBR("boulders", "boulders", 0.5f);
     materialManager.addPBR("metal", "metal");
-
+    materialManager.addPBR("gold", "gold");
     MainScene mainScene;
 
     float pt = glfwGetTime();

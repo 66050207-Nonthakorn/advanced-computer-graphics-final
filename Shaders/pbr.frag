@@ -214,12 +214,13 @@ void main() {
 
         // Specular — sample prefiltered env map at roughness LOD
         vec3 R = reflect(-V, N);
-        vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * iblPrefilterMaxLod).rgb;
+        vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * (iblPrefilterMaxLod - 1.0)).rgb;
         vec2 brdf = texture(brdfLUT, vec2(NdotV, roughness)).rg;
         vec3 specularIBL = prefilteredColor * (F_ibl * brdf.x + brdf.y);
 
         ambient = (diffuseIBL + specularIBL) * ao;
-    } else {
+    }
+    else {
         ambient = vec3(0.03) * albedo * ao;
     }
 

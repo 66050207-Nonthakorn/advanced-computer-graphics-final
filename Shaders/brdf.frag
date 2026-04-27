@@ -6,7 +6,6 @@ out vec2 fragColor;
 const float PI = 3.14159265359;
 const uint SAMPLE_COUNT = 1024u;
 
-// Hammersley low-discrepancy sequence
 float radicalInverseVdC(uint bits) {
     bits = (bits << 16u) | (bits >> 16u);
     bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
@@ -20,7 +19,6 @@ vec2 hammersley(uint i, uint N) {
     return vec2(float(i) / float(N), radicalInverseVdC(i));
 }
 
-// GGX importance sampling
 vec3 importanceSampleGGX(vec2 Xi, vec3 N, float roughness) {
     float a = roughness * roughness;
 
@@ -28,10 +26,8 @@ vec3 importanceSampleGGX(vec2 Xi, vec3 N, float roughness) {
     float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y));
     float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 
-    // Spherical to Cartesian (tangent space)
     vec3 H = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 
-    // Tangent-to-world
     vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
     vec3 T  = normalize(cross(up, N));
     vec3 B  = cross(N, T);
@@ -40,7 +36,6 @@ vec3 importanceSampleGGX(vec2 Xi, vec3 N, float roughness) {
 }
 
 float geometrySchlickGGX(float NdotV, float roughness) {
-    // IBL remapping (k = a^2 / 2)
     float a = roughness;
     float k = (a * a) / 2.0;
     return NdotV / (NdotV * (1.0 - k) + k);
@@ -50,8 +45,6 @@ float geometrySmith(float NdotV, float NdotL, float roughness) {
     return geometrySchlickGGX(NdotV, roughness) * geometrySchlickGGX(NdotL, roughness);
 }
 
-// Integrates the specular BRDF for a given (NdotV, roughness) pair.
-// Returns (scale, bias) for F0 such that: specular ≈ F0 * scale + bias
 vec2 integrateBRDF(float NdotV, float roughness) {
     vec3 V = vec3(sqrt(1.0 - NdotV * NdotV), 0.0, NdotV);
     vec3 N = vec3(0.0, 0.0, 1.0);

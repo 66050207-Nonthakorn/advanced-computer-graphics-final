@@ -65,9 +65,10 @@ void TextureManager::addPBR(const std::string& name, const std::string& dir) {
             continue;
         }
         
-        std::cerr << "[TextureManager] load " << found << std::endl;
         add(name + "-" + slot.keyword, std::make_shared<Texture2D>(found, slot.isSRGB));
     }
+
+    std::cout << "[TextureManager] loaded " << dir << std::endl;
 }
 
 std::shared_ptr<Texture> TextureManager::get(const std::string &name) {

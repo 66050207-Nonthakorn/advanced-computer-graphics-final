@@ -35,6 +35,11 @@ MainScene::MainScene() {
     object2.mesh = MeshManager::instance().get("sphere");
     object2.material = MaterialManager::instance().get("marble");
 
+    SceneObject object3;
+    object3.transform.setPosition({4, 1, 0});
+    object3.mesh = MeshManager::instance().get("sphere");
+    object3.material = MaterialManager::instance().get("gold");
+
     SceneObject face;
     face.transform.setPosition({2, 2, 0});
     face.transform.setScale({.01, .01, .01});
@@ -64,6 +69,7 @@ MainScene::MainScene() {
 
     this->sceneObjects.emplace_back(object);
     this->sceneObjects.emplace_back(object2);
+    this->sceneObjects.emplace_back(object3);
     this->sceneObjects.emplace_back(plane);
     this->sceneObjects.emplace_back(face);
     this->sceneObjects.emplace_back(face2);
