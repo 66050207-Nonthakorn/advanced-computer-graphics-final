@@ -37,6 +37,8 @@ uniform bool useAoMap;
 uniform bool useMetallicMap;
 uniform bool useNormalMap;
 uniform bool useRoughnessMap;
+uniform float metallicValue;
+uniform float roughnessValue;
 
 uniform int pointLightCount;
 uniform PointLight pointLights[MAX_LIGHT];
@@ -136,15 +138,17 @@ float shadowCalculation(vec4 fragPosLightSpace, vec3 N, vec3 L) {
 }
 
 void main() {
-    vec3  albedo     = useAlbedoMap ? pow(texture(material.albedo, uv).rgb, vec3(2.2)) : vec3(1.0);
-    float metallic   = useMetallicMap ? texture(material.metallic, uv).r : 0.0;
-    float roughness  = useRoughnessMap ? texture(material.roughness, uv).r : 1.0;
-    float ao         = useAoMap ? texture(material.ao, uv).r : 1.0;
+    vec3  albedo     = useAlbedoMap ? texture(material.albedo, uv).rgb : vec3(1.0);
+    float metallic   = useMetallicMap ? texture(material.metallic, uv).r : metallicValue;
+    float roughness  = useRoughnessMap ? texture(material.roughness, uv).r : roughnessValue;
+    float ao         = useAoMap ? texture(material.ao, uv).r : 0.3;
+
+    roughness = clamp(roughness, 0.04, 0.9);
 
     vec3 N = getNormalFromMap();
     vec3 V = normalize(viewPosition - worldPosition);
 
-    vec3 F0 = vec3(0.04);
+    vec3 F0 = vec3(0.02);
     F0 = mix(F0, albedo, metallic);
 
     // Outgoing light accumulated
@@ -202,31 +206,30 @@ void main() {
     }
 
     // Ambient / IBL
-    vec3 ambient;
+    vec3 ambient = vec3(0.03) * albedo * ao;
     if (useIBL) {
         float NdotV = max(dot(N, V), 0.0);
         vec3 F_ibl = fresnelSchlickRoughness(NdotV, F0, roughness);
         vec3 kD_ibl = (1.0 - F_ibl) * (1.0 - metallic);
 
-        // Diffuse — sample irradiance map with surface normal
+        // Diffuse
+        float iblDiffuseStrength = 0.5;
         vec3 irradiance = texture(irradianceMap, N).rgb;
-        vec3 diffuseIBL = kD_ibl * irradiance * albedo;
+        vec3 diffuseIBL = kD_ibl * irradiance * albedo * iblDiffuseStrength;
 
-        // Specular — sample prefiltered env map at roughness LOD
+        // Specular
         vec3 R = reflect(-V, N);
-        vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * (iblPrefilterMaxLod - 1.0)).rgb;
+        float mip = roughness * iblPrefilterMaxLod;
+        vec3 prefilteredColor = textureLod(prefilterMap, R, mip).rgb;
         vec2 brdf = texture(brdfLUT, vec2(NdotV, roughness)).rg;
         vec3 specularIBL = prefilteredColor * (F_ibl * brdf.x + brdf.y);
 
         ambient = (diffuseIBL + specularIBL) * ao;
     }
-    else {
-        ambient = vec3(0.03) * albedo * ao;
-    }
 
     vec3 color = ambient + Lo;
     color = color / (color + vec3(1.0)); // HDR Tonemapping (Reinhard)
     color = pow(color, vec3(1.0 / 2.2)); // Gamma correction
- 
+
     fragColor = vec4(color, 1.0);
 }

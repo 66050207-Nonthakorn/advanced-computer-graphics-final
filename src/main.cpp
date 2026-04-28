@@ -13,6 +13,7 @@
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Texture/Texture2D.hpp"
 #include "Engine/Texture/BRDFLUTTexture.hpp"
+#include "Engine/Utils/StringUtils.hpp"
 
 #include "Main/MainScene.hpp"
 
@@ -34,7 +35,6 @@ int main() {
     Renderer renderer;
 
     // Manager
-    auto& meshManager = MeshManager::instance();
     auto& shaderManager = ShaderManager::instance();
     auto& textureManager = TextureManager::instance();
     auto& materialManager = MaterialManager::instance();
@@ -53,85 +53,47 @@ int main() {
     textureManager.add("dirt", std::make_shared<Texture2D>("Textures/dirt.jpg"));
     textureManager.add("face", std::make_shared<Texture2D>("Textures/face.jpg"));
 
-    // IBL — irradiance cubemap (diffuse)
+    // Cubemap
     textureManager.add("sky-ibl-irradiance", std::make_shared<HDRCubemapTexture>(
-        std::array<std::string, 6>{
-            "Textures/Cubemap/Sky/px.hdr",
-            "Textures/Cubemap/Sky/nx.hdr",
-            "Textures/Cubemap/Sky/py.hdr",
-            "Textures/Cubemap/Sky/ny.hdr",
-            "Textures/Cubemap/Sky/pz.hdr",
-            "Textures/Cubemap/Sky/nz.hdr"
-        }
+        StringUtils::getHDRCubemapFileNames("Textures/Cubemap/Sky")
     ));
-
-    // IBL — prefiltered specular cubemap (mip 0 = sharp, mip 3 = rough)
     textureManager.add("sky-ibl-prefilter", std::make_shared<HDRCubemapTexture>(
-        std::vector<std::array<std::string, 6>>{
-            { // mip 0
-                "Textures/Cubemap/Sky/m0_px.hdr",
-                "Textures/Cubemap/Sky/m0_nx.hdr",
-                "Textures/Cubemap/Sky/m0_py.hdr",
-                "Textures/Cubemap/Sky/m0_ny.hdr",
-                "Textures/Cubemap/Sky/m0_pz.hdr",
-                "Textures/Cubemap/Sky/m0_nz.hdr"
-            },
-            { // mip 1
-                "Textures/Cubemap/Sky/m1_px.hdr",
-                "Textures/Cubemap/Sky/m1_nx.hdr",
-                "Textures/Cubemap/Sky/m1_py.hdr",
-                "Textures/Cubemap/Sky/m1_ny.hdr",
-                "Textures/Cubemap/Sky/m1_pz.hdr",
-                "Textures/Cubemap/Sky/m1_nz.hdr"
-            },
-            { // mip 2
-                "Textures/Cubemap/Sky/m2_px.hdr",
-                "Textures/Cubemap/Sky/m2_nx.hdr",
-                "Textures/Cubemap/Sky/m2_py.hdr",
-                "Textures/Cubemap/Sky/m2_ny.hdr",
-                "Textures/Cubemap/Sky/m2_pz.hdr",
-                "Textures/Cubemap/Sky/m2_nz.hdr"
-            },
-            { // mip 3
-                "Textures/Cubemap/Sky/m3_px.hdr",
-                "Textures/Cubemap/Sky/m3_nx.hdr",
-                "Textures/Cubemap/Sky/m3_py.hdr",
-                "Textures/Cubemap/Sky/m3_ny.hdr",
-                "Textures/Cubemap/Sky/m3_pz.hdr",
-                "Textures/Cubemap/Sky/m3_nz.hdr"
-            },
-            { // mip 4
-                "Textures/Cubemap/Sky/m4_px.hdr",
-                "Textures/Cubemap/Sky/m4_nx.hdr",
-                "Textures/Cubemap/Sky/m4_py.hdr",
-                "Textures/Cubemap/Sky/m4_ny.hdr",
-                "Textures/Cubemap/Sky/m4_pz.hdr",
-                "Textures/Cubemap/Sky/m4_nz.hdr"
-            }
-        }
+        StringUtils::getHDRCubemapMipFileNames("Textures/Cubemap/Sky", 7)
+    ));
+    textureManager.add("night-sky-ibl-irradiance", std::make_shared<HDRCubemapTexture>(
+        StringUtils::getHDRCubemapFileNames("Textures/Cubemap/NightSky")
+    ));
+    textureManager.add("night-sky-ibl-prefilter", std::make_shared<HDRCubemapTexture>(
+        StringUtils::getHDRCubemapMipFileNames("Textures/Cubemap/NightSky", 7)
     ));
 
     textureManager.add("brdf-lut-512", std::make_shared<BRDFLUTTexture>(512));
 
-    textureManager.addPBR("cloth",  "Textures/Cloth");
-    textureManager.addPBR("silver", "Textures/Silver");
-    textureManager.addPBR("brass",  "Textures/Brass");
-    textureManager.addPBR("marble",  "Textures/Marble");
-    textureManager.addPBR("boulders",  "Textures/Boulders");
-    textureManager.addPBR("metal",  "Textures/Metal");
-    textureManager.addPBR("gold",  "Textures/Gold");
+    // PBR Textures
+    textureManager.addPBR("cloth",  "Textures/PBR/Cloth");
+    textureManager.addPBR("silver", "Textures/PBR/Silver");
+    textureManager.addPBR("brass",  "Textures/PBR/Brass");
+    textureManager.addPBR("marble",  "Textures/PBR/Marble");
+    textureManager.addPBR("boulders",  "Textures/PBR/Boulders");
+    textureManager.addPBR("metal",  "Textures/PBR/Metal");
+    textureManager.addPBR("gold",  "Textures/PBR/Gold");
+    textureManager.addPBR("bread",  "Textures/PBR/Bread");
+    textureManager.addPBR("brick",  "Textures/PBR/Brick");
 
     // Add Materials
     materialManager.add("dirt", std::make_shared<BlinnPhongMaterial>(textureManager.get("dirt")));
     materialManager.add("face", std::make_shared<BlinnPhongMaterial>(textureManager.get("face")));
     materialManager.addPBR("default", "default");
-    materialManager.addPBR("cloth", "cloth");
+    materialManager.addPBR("cloth", "cloth", 2.0f);
     materialManager.addPBR("silver", "silver");
     materialManager.addPBR("brass", "brass", 2.0f);
     materialManager.addPBR("marble", "marble");
     materialManager.addPBR("boulders", "boulders", 0.5f);
     materialManager.addPBR("metal", "metal");
     materialManager.addPBR("gold", "gold");
+    materialManager.addPBR("bread", "bread");
+    materialManager.addPBR("brick", "brick");
+
     MainScene mainScene;
 
     float pt = glfwGetTime();

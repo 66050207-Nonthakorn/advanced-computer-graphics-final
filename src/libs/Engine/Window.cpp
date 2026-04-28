@@ -37,7 +37,7 @@ Window::Window(const int width, const int height, const std::string& title) {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
-    
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glViewport(0, 0, buf_w, buf_h);

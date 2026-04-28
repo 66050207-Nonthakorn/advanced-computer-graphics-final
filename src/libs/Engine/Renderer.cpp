@@ -72,12 +72,13 @@ void Renderer::draw(Scene& scene) {
         cubemapShader->use();
         cubemapShader->uniformMat4("view", scene.camera.getView());
         cubemapShader->uniformMat4("projection", scene.camera.getProjection());
-        cubemapShader->uniformInt("skybox", 0);
+        cubemapShader->uniformInt("cubemap", 0);
 
         glDepthFunc(GL_LEQUAL);
         glDepthMask(GL_FALSE);
 
         scene.cubemap.iblIrradianceMap->bind(0);
+
         glBindVertexArray(scene.cubemap.cube->vao);
         glDrawElements(GL_TRIANGLES, scene.cubemap.cube->indexCount, GL_UNSIGNED_INT, 0);
 

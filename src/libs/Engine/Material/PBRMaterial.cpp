@@ -1,6 +1,7 @@
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Shader/ShaderManager.hpp"
 #include "GL/glew.h"
+#include <iostream>
 
 PBRMaterial::PBRMaterial(
     const std::shared_ptr<Texture>& albedo,
@@ -36,6 +37,8 @@ void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
     this->shader->uniformBool("useMetallicMap", hasMetallic);
     this->shader->uniformBool("useNormalMap", hasNormal);
     this->shader->uniformBool("useRoughnessMap", hasRoughness);
+    this->shader->uniformFloat("metallicValue", this->metallicValue);
+    this->shader->uniformFloat("roughnessValue", this->roughnessValue);
 
     this->shader->uniformMat4("view", context.camera.getView());
     this->shader->uniformMat4("projection", context.camera.getProjection());
@@ -59,9 +62,12 @@ void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
     this->shader->uniformMat4("lightSpaceMatrix", context.lightSpaceMatrix);
 
     // IBL
-    const bool useIBL = context.iblIrradianceMap != 0 && context.iblPrefilterMap != 0
-                        && context.iblBrdfLUT != 0;
+    const bool useIBL = context.iblIrradianceMap != 0 &&
+                        context.iblPrefilterMap != 0 &&
+                        context.iblBrdfLUT != 0;
+    
     this->shader->uniformBool("useIBL", useIBL);
+    
     if (useIBL) {
         glActiveTexture(GL_TEXTURE6);
         glBindTexture(GL_TEXTURE_CUBE_MAP, context.iblIrradianceMap);

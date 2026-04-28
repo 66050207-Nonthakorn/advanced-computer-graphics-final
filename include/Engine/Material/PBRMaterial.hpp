@@ -17,6 +17,8 @@ public:
     void bindPerObject(const Material::PerObjectContext& context) override;
 
     float normalStrength = 1.0f;
+    float metallicValue = 0.0f;
+    float roughnessValue = 0.7f;
 
 protected:
     std::shared_ptr<Texture> albedo, ao, metallic, normal, roughness;
