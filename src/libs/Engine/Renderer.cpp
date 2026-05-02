@@ -7,6 +7,10 @@
 #include <algorithm>
 #include "glm/mat4x4.hpp"
 #include "glm/mat3x3.hpp"
+#include "Renderer.hpp"
+
+Renderer::Renderer(const Window &window)
+    : window(window) { }
 
 void Renderer::clearScreen() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -67,7 +71,7 @@ void Renderer::draw(Scene& scene) {
     }
 
     // Cubemap
-    if (scene.cubemap.iblIrradianceMap != nullptr) {
+    if (scene.cubemap.environmentMap != nullptr) {
         auto cubemapShader = ShaderManager::instance().get("cubemap");
         cubemapShader->use();
         cubemapShader->uniformMat4("view", scene.camera.getView());
@@ -77,7 +81,7 @@ void Renderer::draw(Scene& scene) {
         glDepthFunc(GL_LEQUAL);
         glDepthMask(GL_FALSE);
 
-        scene.cubemap.iblIrradianceMap->bind(0);
+        scene.cubemap.environmentMap->bind(0);
 
         glBindVertexArray(scene.cubemap.cube->vao);
         glDrawElements(GL_TRIANGLES, scene.cubemap.cube->indexCount, GL_UNSIGNED_INT, 0);

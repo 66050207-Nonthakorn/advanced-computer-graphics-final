@@ -17,7 +17,7 @@ file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
 add_executable(advanced_computer_graphics_final ${SOURCE_FILES})
 
 target_include_directories(advanced_computer_graphics_final PRIVATE
-  ${CMAKE_SOURCE_DIR}/include
+  ${CMAKE_SOURCE_DIR}/src/Libs
 )
 
 target_link_libraries(advanced_computer_graphics_final PRIVATE
@@ -34,7 +34,7 @@ if(APPLE)
   )
 endif()
 
-target_compile_options(advanced_computer_graphics_final PRIVATE $<$<CONFIG:Release>:/Ox>)
+target_compile_options(advanced_computer_graphics_final PRIVATE $<$<CONFIG:Release>:/O2>)
 
 # Copy shaders next to the binary (runs on every build)
 add_custom_target(copy_shaders ALL

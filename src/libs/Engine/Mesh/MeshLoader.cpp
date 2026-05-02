@@ -132,7 +132,5 @@ MeshData MeshLoader::loadFromObj(const std::string &path) {
         }
     }
 
-    std::cout << "[MeshLoader] took " << glfwGetTime() - t << std::endl;
-
     return result;
 }
