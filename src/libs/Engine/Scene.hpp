@@ -13,7 +13,7 @@
 struct Scene {
     Camera camera;
 
-    std::vector<SceneObject> sceneObjects;
+    std::vector<std::shared_ptr<SceneObject>> sceneObjects;
     
     std::vector<PointLight> lights;
     DirectionalLight directionalLight;

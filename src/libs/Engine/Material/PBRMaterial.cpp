@@ -89,5 +89,5 @@ void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
 }
 
 void PBRMaterial::bindPerObject(const Material::PerObjectContext& context) {
-    this->shader->uniformMat4("model", context.transform.getModel());
+    this->shader->uniformMat4("model", context.modelMatrix);
 }

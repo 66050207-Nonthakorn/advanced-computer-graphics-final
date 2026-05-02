@@ -26,7 +26,7 @@ public:
     };
 
     struct PerObjectContext {
-        Transform& transform;
+        glm::mat4 modelMatrix;
     };
     
     Material(const std::shared_ptr<Shader>& shader);

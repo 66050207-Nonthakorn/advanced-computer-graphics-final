@@ -17,7 +17,31 @@ void Renderer::clearScreen() {
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 }
 
+namespace {
+
+struct FlatNode {
+    SceneObject* obj;
+    glm::mat4 worldMatrix;
+};
+
+void collectNodes(const std::shared_ptr<SceneObject>& node, std::vector<FlatNode>& out) {
+    if (node->mesh) {
+        out.push_back({ node.get(), node->transform.getWorldMatrix() });
+    }
+    for (auto& child : node->children) {
+        collectNodes(child, out);
+    }
+}
+
+} // namespace
+
 void Renderer::draw(Scene& scene) {
+    // Flatten scene hierarchy into renderable nodes
+    std::vector<FlatNode> allNodes;
+    for (auto& root : scene.sceneObjects) {
+        collectNodes(root, allNodes);
+    }
+
     // Shadow pass
     glm::mat4 lightSpaceMat = scene.directionalLight.getLightSpaceMatrix();
     auto shadowShader = ShaderManager::instance().get("shadow");
@@ -32,26 +56,24 @@ void Renderer::draw(Scene& scene) {
     shadowShader->use();
     shadowShader->uniformMat4("lightSpaceMatrix", lightSpaceMat);
 
-    for (auto& sceneObject : scene.sceneObjects) {
-        shadowShader->uniformMat4("model", sceneObject.transform.getModel());
-        
-        glBindVertexArray(sceneObject.mesh->vao);
-        glDrawElements(GL_TRIANGLES, sceneObject.mesh->indexCount, GL_UNSIGNED_INT, 0);
+    for (auto& node : allNodes) {
+        shadowShader->uniformMat4("model", node.worldMatrix);
+        glBindVertexArray(node.obj->mesh->vao);
+        glDrawElements(GL_TRIANGLES, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-    // Lighting pass
-    std::vector<SceneObject> sceneObjects(scene.sceneObjects.begin(), scene.sceneObjects.end());
-    std::sort(sceneObjects.begin(), sceneObjects.end(),
+    // Lighting pass — sort by material to minimize shader switches
+    std::sort(allNodes.begin(), allNodes.end(),
         [](const auto& a, const auto& b) {
-            return a.material.get() < b.material.get();
+            return a.obj->material.get() < b.obj->material.get();
         });
 
     Material* lastMaterial = nullptr;
-    for (auto& sceneObject : sceneObjects) {
-        Material* mat = sceneObject.material.get();
+    for (auto& node : allNodes) {
+        Material* mat = node.obj->material.get();
         if (mat != lastMaterial) {
             unsigned int iblIrr  = scene.cubemap.iblIrradianceMap ? scene.cubemap.iblIrradianceMap->getId() : 0;
             unsigned int iblPref = scene.cubemap.iblPrefilterMap  ? scene.cubemap.iblPrefilterMap->getId()  : 0;
@@ -63,11 +85,11 @@ void Renderer::draw(Scene& scene) {
                                 iblIrr, iblPref, iblMips, iblLUT });
             lastMaterial = mat;
         }
-        
-        sceneObject.material->bindPerObject({ sceneObject.transform });
-        
-        glBindVertexArray(sceneObject.mesh->vao);
-        glDrawElements(GL_TRIANGLES, sceneObject.mesh->indexCount, GL_UNSIGNED_INT, 0);
+
+        node.obj->material->bindPerObject({ node.worldMatrix });
+
+        glBindVertexArray(node.obj->mesh->vao);
+        glDrawElements(GL_TRIANGLES, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
     }
 
     // Cubemap

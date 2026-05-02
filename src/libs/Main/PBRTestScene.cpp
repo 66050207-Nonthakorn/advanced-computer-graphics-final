@@ -30,9 +30,9 @@ PBRTestScene::PBRTestScene() {
 
     for (int row = 0; row < gridSize; ++row) {
         for (int col = 0; col < gridSize; ++col) {
-            SceneObject sphere;
-            sphere.mesh = sphereMesh;
-            sphere.transform.setPosition({
+            auto sphere = std::make_shared<SceneObject>();
+            sphere->mesh = sphereMesh;
+            sphere->transform.setPosition({
                 origin + col * spacing,
                 origin + row * spacing,
                 0.0f
@@ -41,9 +41,9 @@ PBRTestScene::PBRTestScene() {
             auto pbr = std::make_shared<PBRMaterial>(nullptr, nullptr, nullptr, nullptr, nullptr);
             pbr->metallicValue = static_cast<float>(col) / static_cast<float>(gridSize - 1);
             pbr->roughnessValue = static_cast<float>(row) / static_cast<float>(gridSize - 1);
-            sphere.material = pbr;
+            sphere->material = pbr;
 
-            this->sceneObjects.emplace_back(std::move(sphere));
+            this->sceneObjects.push_back(sphere);
         }
     }
 

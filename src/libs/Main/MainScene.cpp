@@ -29,38 +29,38 @@ MainScene::MainScene() {
         TextureManager::instance().get("brdf-lut-512")
     );
 
-    SceneObject object;
-    object.mesh = MeshManager::instance().get("sphere");
-    object.material = MaterialManager::instance().get("cloth");
+    auto object = std::make_shared<SceneObject>();
+    object->mesh = MeshManager::instance().get("sphere");
+    object->material = MaterialManager::instance().get("cloth");
 
-    SceneObject object2;
-    object2.transform.setPosition({2, 1, 0});
-    object2.mesh = MeshManager::instance().get("sphere");
-    object2.material = MaterialManager::instance().get("titanium");
+    auto object2 = std::make_shared<SceneObject>();
+    object2->transform.setPosition({2, 1, 0});
+    object2->mesh = MeshManager::instance().get("sphere");
+    object2->material = MaterialManager::instance().get("titanium");
 
-    SceneObject object3;
-    object3.transform.setPosition({4, 1, 0});
-    object3.transform.setScale({10, 10, 10});
-    object3.mesh = MeshManager::instance().getFromFile("Models/Bread.obj");
-    object3.material = MaterialManager::instance().get("bread");
+    auto object3 = std::make_shared<SceneObject>();
+    object3->transform.setPosition({4, 1, 0});
+    object3->transform.setScale({10, 10, 10});
+    object3->mesh = MeshManager::instance().getFromFile("Models/Bread.obj");
+    object3->material = MaterialManager::instance().get("bread");
 
-    SceneObject face;
-    face.transform.setPosition({2, 2, 0});
-    face.transform.setScale({.01, .01, .01});
-    face.mesh = MeshManager::instance().getFromFile("Models/Caligula.obj");
-    face.material = MaterialManager::instance().get("titanium");
+    auto face = std::make_shared<SceneObject>();
+    face->transform.setPosition({2, 2, 0});
+    face->transform.setScale({.01, .01, .01});
+    face->mesh = MeshManager::instance().getFromFile("Models/Caligula.obj");
+    face->material = MaterialManager::instance().get("titanium");
 
-    SceneObject face2;
-    face2.transform.setPosition({4, 2, 0});
-    face2.transform.setScale({.01, .01, .01});
-    face2.mesh = MeshManager::instance().getFromFile("Models/Caligula.obj");
-    face2.material = MaterialManager::instance().get("gold");
+    auto face2 = std::make_shared<SceneObject>();
+    face2->transform.setPosition({4, 2, 0});
+    face2->transform.setScale({.01, .01, .01});
+    face2->mesh = MeshManager::instance().getFromFile("Models/Caligula.obj");
+    face2->material = MaterialManager::instance().get("gold");
 
-    SceneObject plane;
-    plane.mesh = MeshManager::instance().get("plane");
-    plane.material = MaterialManager::instance().get("metal");
-    plane.transform.setPosition({0, -2, 0});
-    plane.transform.setScale({10, 1, 10});
+    auto plane = std::make_shared<SceneObject>();
+    plane->mesh = MeshManager::instance().get("plane");
+    plane->material = MaterialManager::instance().get("metal");
+    plane->transform.setPosition({0, -2, 0});
+    plane->transform.setScale({10, 1, 10});
 
     PointLight light;
     light.position = {0.0, 2.5, 0.0};
@@ -71,12 +71,12 @@ MainScene::MainScene() {
     this->directionalLight.color = glm::vec3(0.2f, 0.2f, 0.2f);
     this->directionalLight.intensity = 1.0f;
 
-    this->sceneObjects.emplace_back(object);
-    this->sceneObjects.emplace_back(object2);
-    this->sceneObjects.emplace_back(object3);
-    this->sceneObjects.emplace_back(plane);
-    this->sceneObjects.emplace_back(face);
-    this->sceneObjects.emplace_back(face2);
+    this->sceneObjects.push_back(object);
+    this->sceneObjects.push_back(object2);
+    this->sceneObjects.push_back(object3);
+    this->sceneObjects.push_back(plane);
+    this->sceneObjects.push_back(face);
+    this->sceneObjects.push_back(face2);
 
     this->lights.emplace_back(light);
 }
