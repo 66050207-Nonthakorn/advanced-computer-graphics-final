@@ -11,8 +11,7 @@
 #include <memory>
 
 struct Scene {
-    Camera camera;
-
+    std::shared_ptr<Camera> camera;
     std::vector<std::shared_ptr<SceneObject>> sceneObjects;
     
     std::vector<PointLight> lights;
@@ -20,5 +19,5 @@ struct Scene {
     
     HDRCubemap cubemap;
 
-    virtual void update(float dt) = 0;
+    virtual void update(float dt);
 };

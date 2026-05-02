@@ -34,10 +34,8 @@ int main() {
         Constanst::SCREEN_HEIGHT,
         Constanst::SCREEN_TITLE
     );
-    window.setIsShowCursor(false);
-
+    // window.setIsShowCursor(false);
     Renderer renderer(window);
-
     loadAssets(window);
 
     MainScene mainScene;

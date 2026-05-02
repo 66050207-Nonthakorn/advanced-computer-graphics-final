@@ -17,4 +17,5 @@ struct SceneObject : std::enable_shared_from_this<SceneObject> {
     std::vector<std::shared_ptr<SceneObject>> children;
 
     void addChild(const std::shared_ptr<SceneObject>& child);
+    virtual void update(float dt) { };
 };

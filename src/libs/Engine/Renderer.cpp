@@ -80,7 +80,7 @@ void Renderer::draw(Scene& scene) {
             unsigned int iblLUT  = scene.cubemap.iblBrdfLUT       ? scene.cubemap.iblBrdfLUT->getId()       : 0;
             int iblMips = scene.cubemap.iblPrefilterMips;
 
-            mat->bindPerFrame({ scene.camera, scene.lights, scene.directionalLight,
+            mat->bindPerFrame({ *scene.camera, scene.lights, scene.directionalLight,
                                 scene.directionalLight.getDepthMapID(), lightSpaceMat,
                                 iblIrr, iblPref, iblMips, iblLUT });
             lastMaterial = mat;
@@ -96,8 +96,8 @@ void Renderer::draw(Scene& scene) {
     if (scene.cubemap.environmentMap != nullptr) {
         auto cubemapShader = ShaderManager::instance().get("cubemap");
         cubemapShader->use();
-        cubemapShader->uniformMat4("view", scene.camera.getView());
-        cubemapShader->uniformMat4("projection", scene.camera.getProjection());
+        cubemapShader->uniformMat4("view", scene.camera->getView());
+        cubemapShader->uniformMat4("projection", scene.camera->getProjection());
         cubemapShader->uniformInt("cubemap", 0);
 
         glDepthFunc(GL_LEQUAL);

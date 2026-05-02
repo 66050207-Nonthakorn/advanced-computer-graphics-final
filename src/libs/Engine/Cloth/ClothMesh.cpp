@@ -116,14 +116,12 @@ void ClothMesh::unpin(int index) { particles[index].pinned = false; }
 void ClothMesh::applyWind(float dt) {
     if (wind == glm::vec3(0.0f) && windGustAmplitude == 0.0f) return;
 
-    // Random gust offset — cheap white noise
     float gust = windGustAmplitude * (static_cast<float>(std::rand()) / RAND_MAX * 2.0f - 1.0f);
-    glm::vec3 windDir = glm::length(wind) > 1e-6f ? glm::normalize(wind) : glm::vec3(0, 0, 1);
+    glm::vec3 windDir = glm::normalize(wind);
     glm::vec3 windForce = wind + windDir * gust;
 
     float dt2 = dt * dt;
 
-    // Per-triangle: scale force by |dot(faceNormal, windDir)| so edge-on faces feel less
     for (int r = 0; r < rows - 1; ++r) {
         for (int c = 0; c < cols - 1; ++c) {
             int i00 = r * cols + c;
@@ -191,7 +189,7 @@ void ClothMesh::solveConstraints() {
 void ClothMesh::recalcNormals() {
     for (auto& p : particles) p.normal = glm::vec3(0.0f);
 
-    // Accumulate face normals — same triangle order as buildInitialMeshData
+    // Accumulate face normals
     for (int r = 0; r < rows - 1; ++r) {
         for (int c = 0; c < cols - 1; ++c) {
             int i00 = r * cols + c;

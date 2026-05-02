@@ -1,5 +1,7 @@
 #include "Main/MainScene.hpp"
 #include "Main/Constanst.hpp"
+#include "Main/MoveableCamera.hpp"
+#include "Main/DebugConsole.hpp"
 
 #include "Engine/Manager/MeshManager.hpp"
 #include "Engine/Manager/MaterialManager.hpp"
@@ -10,19 +12,15 @@
 
 #include "glfw/glfw3.h"
 
+#include <cmath>
 #include <filesystem>
 #include <iostream>
 
-namespace {
-
-float yaw = -90, pitch = 0, sensitivity = 0.2f;
-float speed = 10.0f;
-
-}
-
 MainScene::MainScene() {
     float aspect = static_cast<float>(Constanst::SCREEN_WIDTH) / Constanst::SCREEN_HEIGHT;
-    camera = Camera(60.0f, aspect, 0.1f, 100.0f);
+
+    movableCamera = std::make_shared<MovableCamera>(60.0f, aspect, 0.1f, 100.0f);
+    this->camera = movableCamera;
 
     cubemap = HDRCubemap(
         TextureManager::instance().get("night-sky-hdr"),
@@ -45,7 +43,7 @@ MainScene::MainScene() {
     object3->material = MaterialManager::instance().get("bread");
 
     auto face = std::make_shared<SceneObject>();
-    face->transform.setPosition({2, 2, 0});
+    face->transform.setPosition({ 2, 2, 0});
     face->transform.setScale({.01, .01, .01});
     face->mesh = MeshManager::instance().getFromFile("Models/Caligula.obj");
     face->material = MaterialManager::instance().get("titanium");
@@ -64,7 +62,7 @@ MainScene::MainScene() {
 
     // Cloth — 30x30 grid, 4x4 world units, pinned at top two corners
     cloth = std::make_shared<ClothMesh>(30, 30, 4.0f, 4.0f);
-    cloth->wind = { 0.0f, 0.0f, 1.0f };
+    cloth->wind = { 1.0f, 0.0f, 1.0f };
     cloth->windGustAmplitude = 4.0f;
     
     auto clothObj = std::make_shared<SceneObject>();
@@ -75,57 +73,86 @@ MainScene::MainScene() {
     PointLight light;
     light.position = {0.0, 2.5, 0.0};
     light.color = {1.0, 1.0, 1.0};
-    light.intensity = 10.0f;
+    light.intensity = 20.0f;
 
     this->directionalLight.direction = glm::normalize(glm::vec3(-1.0f, -1.0f, -0.5f));
     this->directionalLight.color = glm::vec3(0.2f, 0.2f, 0.2f);
-    this->directionalLight.intensity = 1.0f;
+    this->directionalLight.intensity = 10.0f;
 
-    this->sceneObjects.push_back(object);
-    this->sceneObjects.push_back(object2);
-    this->sceneObjects.push_back(object3);
-    this->sceneObjects.push_back(plane);
-    this->sceneObjects.push_back(face);
-    this->sceneObjects.push_back(face2);
-    this->sceneObjects.push_back(clothObj);
+    this->sceneObjects.emplace_back(object);
+    this->sceneObjects.emplace_back(object2);
+    this->sceneObjects.emplace_back(object3);
+    this->sceneObjects.emplace_back(plane);
+    this->sceneObjects.emplace_back(face);
+    this->sceneObjects.emplace_back(face2);
+    this->sceneObjects.emplace_back(clothObj);
+    this->sceneObjects.emplace_back(movableCamera);
 
     this->lights.emplace_back(light);
 }
 
+void MainScene::applyDebugCommands() {
+    using C = DebugConsole::Command;
+    debugConsole.poll(pendingCmds);
+
+    for (auto& cmd : pendingCmds) {
+        switch (cmd.type) {
+            case C::Type::ClothWind:
+                cloth->wind = { cmd.f0, cmd.f1, cmd.f2 };
+                break;
+            case C::Type::ClothWindGust:
+                cloth->windGustAmplitude = cmd.f0;
+                break;
+            case C::Type::ClothDamping:
+                cloth->damping = cmd.f0;
+                break;
+            case C::Type::ClothGravity:
+                cloth->gravity = { cmd.f0, cmd.f1, cmd.f2 };
+                break;
+            case C::Type::ClothIterations:
+                cloth->solverIterations = static_cast<int>(cmd.f0);
+                break;
+
+            case C::Type::LightPos:
+                if (!lights.empty())
+                    lights[0].position = { cmd.f0, cmd.f1, cmd.f2 };
+                break;
+            case C::Type::LightIntensity:
+                if (!lights.empty())
+                    lights[0].intensity = cmd.f0;
+                break;
+            case C::Type::LightColor:
+                if (!lights.empty())
+                    lights[0].color = { cmd.f0, cmd.f1, cmd.f2 };
+                break;
+
+            case C::Type::DirLightDir:
+                directionalLight.direction = glm::normalize(glm::vec3(cmd.f0, cmd.f1, cmd.f2));
+                break;
+            case C::Type::DirLightIntensity:
+                directionalLight.intensity = cmd.f0;
+                break;
+
+            case C::Type::DrawFull:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                break;
+            case C::Type::DrawLine:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                break;
+            case C::Type::DrawPoint:
+                glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+                break;
+
+            default: break;
+        }
+    }
+
+    pendingCmds.clear();
+}
+
 void MainScene::update(float dt) {
-    glm::vec2 mouseDelta = InputManager::instance().getMouseDelta();
-    yaw += mouseDelta.x * sensitivity;
-    pitch -= mouseDelta.y * sensitivity;
-    pitch = glm::clamp(pitch, -89.0f, 89.0f);
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-    glm::vec3 right = glm::normalize(glm::cross(front, glm::vec3(0, 1, 0)));
-    glm::vec3 up = glm::normalize(glm::cross(right, front));
-
-    if (InputManager::instance().isKeyPressed(GLFW_KEY_W)) {
-        camera.position += speed * front * dt;
-    }
-    if (InputManager::instance().isKeyPressed(GLFW_KEY_S)) {
-        camera.position -= speed * front * dt;
-    }
-    if (InputManager::instance().isKeyPressed(GLFW_KEY_A)) {
-        camera.position -= speed * right * dt;
-    }
-    if (InputManager::instance().isKeyPressed(GLFW_KEY_D)) {
-        camera.position += speed * right * dt;
-    }
-    if (InputManager::instance().isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-        camera.position -= speed * up * dt;
-    }
-    if (InputManager::instance().isKeyPressed(GLFW_KEY_SPACE)) {
-        camera.position += speed * up * dt;
-    }
-
-    camera.target = camera.position + glm::normalize(front);
+    applyDebugCommands();
+    Scene::update(dt);
 
     if (InputManager::instance().isKeyPressed(GLFW_KEY_UP)) {
         cloth->windGustAmplitude += 0.1;
@@ -135,4 +162,14 @@ void MainScene::update(float dt) {
     }
 
     cloth->update(dt);
+
+    lightOrbitTime += dt;
+
+    constexpr float orbitRadius = 5.0f;
+    constexpr float orbitSpeed = 1.0f;
+    constexpr float lightHeight = 2.5f;
+
+    this->lights[0].position.x = orbitRadius * std::cos(lightOrbitTime * orbitSpeed);
+    this->lights[0].position.y = lightHeight;
+    this->lights[0].position.z = orbitRadius * std::sin(lightOrbitTime * orbitSpeed);
 }

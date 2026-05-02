@@ -3,6 +3,9 @@
 #include "Engine/Scene.hpp"
 #include "Engine/Cloth/ClothMesh.hpp"
 
+#include "MoveableCamera.hpp"
+#include "DebugConsole.hpp"
+
 #include <memory>
 
 class MainScene : public Scene {
@@ -12,4 +15,11 @@ public:
 
 private:
     std::shared_ptr<ClothMesh> cloth;
+    std::shared_ptr<MovableCamera> movableCamera;
+    float lightOrbitTime = 0.0f;
+
+    DebugConsole debugConsole;
+    std::vector<DebugConsole::Command> pendingCmds;
+
+    void applyDebugCommands();
 };

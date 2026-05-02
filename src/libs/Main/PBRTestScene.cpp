@@ -14,9 +14,9 @@ float speed = 10.0f;
 
 PBRTestScene::PBRTestScene() {
     float aspect = static_cast<float>(Constanst::SCREEN_WIDTH) / Constanst::SCREEN_HEIGHT;
-    camera = Camera(60.0f, aspect, 0.1f, 100.0f);
-    camera.position = {0.0f, 8.0f, 24.0f};
-    camera.target = {0.0f, 0.0f, 0.0f};
+    camera = std::make_shared<Camera>(60.0f, aspect, 0.1f, 100.0f);
+    camera->position = {0.0f, 8.0f, 24.0f};
+    camera->target = {0.0f, 0.0f, 0.0f};
 
     cubemap = HDRCubemap(
         TextureManager::instance().get("night-sky-hdr"),
@@ -74,23 +74,23 @@ void PBRTestScene::update(float dt) {
     glm::vec3 up = glm::normalize(glm::cross(right, front));
 
     if (InputManager::instance().isKeyPressed(GLFW_KEY_W)) {
-        camera.position += speed * front * dt;
+        camera->position += speed * front * dt;
     }
     if (InputManager::instance().isKeyPressed(GLFW_KEY_S)) {
-        camera.position -= speed * front * dt;
+        camera->position -= speed * front * dt;
     }
     if (InputManager::instance().isKeyPressed(GLFW_KEY_A)) {
-        camera.position -= speed * right * dt;
+        camera->position -= speed * right * dt;
     }
     if (InputManager::instance().isKeyPressed(GLFW_KEY_D)) {
-        camera.position += speed * right * dt;
+        camera->position += speed * right * dt;
     }
     if (InputManager::instance().isKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-        camera.position -= speed * up * dt;
+        camera->position -= speed * up * dt;
     }
     if (InputManager::instance().isKeyPressed(GLFW_KEY_SPACE)) {
-        camera.position += speed * up * dt;
+        camera->position += speed * up * dt;
     }
 
-    camera.target = camera.position + glm::normalize(front);
+    camera->target = camera->position + glm::normalize(front);
 }
