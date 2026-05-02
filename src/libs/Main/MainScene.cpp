@@ -1,12 +1,12 @@
 #include "Main/MainScene.hpp"
 #include "Main/Constanst.hpp"
 
-#include "Engine/Mesh/MeshManager.hpp"
-#include "Engine/Material/MaterialManager.hpp"
+#include "Engine/Manager/MeshManager.hpp"
+#include "Engine/Manager/MaterialManager.hpp"
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Light/PointLight.hpp"
 #include "Engine/Manager/InputManager.hpp"
-#include "Engine/Texture/TextureManager.hpp"
+#include "Engine/Manager/TextureManager.hpp"
 
 #include "glfw/glfw3.h"
 

@@ -5,7 +5,7 @@
 #include "Engine/Light/PointLight.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/HDRCubemap.hpp"
-#include "Engine/Texture/TextureManager.hpp"
+#include "Engine/Manager/TextureManager.hpp"
 
 #include <vector>
 #include <memory>

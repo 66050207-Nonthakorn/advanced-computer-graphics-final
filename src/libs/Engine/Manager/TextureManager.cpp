@@ -1,4 +1,4 @@
-#include "Engine/Texture/TextureManager.hpp"
+#include "Engine/Manager/TextureManager.hpp"
 
 #include "Engine/Texture/Texture2D.hpp"
 
@@ -52,10 +52,10 @@ void TextureManager::addPBR(const std::string& name, const std::string& dir) {
 
         for (const auto& entry : fs::directory_iterator(dir)) {
             if (!entry.is_regular_file()) continue;
-        
+
             std::string lower = entry.path().filename().string();
             std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-            
+
             if (lower.find(slot.keyword) != std::string::npos) {
                 found = entry.path().string();
                 break;
@@ -66,7 +66,7 @@ void TextureManager::addPBR(const std::string& name, const std::string& dir) {
             std::cerr << "[TextureManager] no " << slot.keyword << " texture found in " << dir << std::endl;
             continue;
         }
-        
+
         add(name + "-" + slot.keyword, std::make_shared<Texture2D>(found, slot.isSRGB));
     }
 }

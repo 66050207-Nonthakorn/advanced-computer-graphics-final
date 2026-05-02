@@ -1,6 +1,6 @@
 #include "Engine/Renderer.hpp"
 #include "Engine/Scene.hpp"
-#include "Engine/Shader/ShaderManager.hpp"
+#include "Engine/Manager/ShaderManager.hpp"
 
 #include "GL/glew.h"
 #include "Engine/Light/DirectionalLight.hpp"

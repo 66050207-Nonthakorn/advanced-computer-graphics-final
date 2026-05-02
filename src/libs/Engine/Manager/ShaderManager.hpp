@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <memory>
 
-#include "Shader.hpp"
+#include "Engine/Shader/Shader.hpp"
 
 class ShaderManager {
 public:
@@ -22,5 +22,5 @@ public:
 
 private:
     ShaderManager() = default;
-    std::unordered_map<std::string, std::shared_ptr<Shader>> shaders; 
+    std::unordered_map<std::string, std::shared_ptr<Shader>> shaders;
 };

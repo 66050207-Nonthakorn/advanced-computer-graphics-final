@@ -1,5 +1,5 @@
 #include "Engine/Material/BlinnPhongMaterial.hpp"
-#include "Engine/Shader/ShaderManager.hpp"
+#include "Engine/Manager/ShaderManager.hpp"
 #include "Engine/Transform.hpp"
 
 BlinnPhongMaterial::BlinnPhongMaterial()

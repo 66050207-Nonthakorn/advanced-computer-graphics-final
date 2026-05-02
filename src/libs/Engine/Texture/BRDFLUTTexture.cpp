@@ -1,6 +1,6 @@
 #include "Engine/Texture/BRDFLUTTexture.hpp"
 #include "Engine/Shader/Shader.hpp"
-#include "Engine/Shader/ShaderManager.hpp"
+#include "Engine/Manager/ShaderManager.hpp"
 
 #include <iostream>
 

@@ -7,7 +7,7 @@
 #include <thread>
 #include <mutex>
 
-#include "Texture.hpp"
+#include "Engine/Texture/Texture.hpp"
 
 class TextureManager {
 public:

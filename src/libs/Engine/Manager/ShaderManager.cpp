@@ -1,4 +1,4 @@
-#include "Engine/Shader/ShaderManager.hpp"
+#include "Engine/Manager/ShaderManager.hpp"
 
 #include <iostream>
 
@@ -26,6 +26,6 @@ std::shared_ptr<Shader> ShaderManager::get(const std::string &name) {
         std::cerr << "[ShaderManager] shader named " << name << " is not found" << std::endl;
         exit(1);
     }
-    
+
     return shaders[name];
 }

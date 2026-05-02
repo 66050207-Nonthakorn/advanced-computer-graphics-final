@@ -16,7 +16,6 @@ public:
     void setRotation(const glm::vec3& rotation);
     void setScale(const glm::vec3& scale);
 
-    // World space
     void setParent(Transform* parent);
 
     glm::mat4 getLocalMatrix();

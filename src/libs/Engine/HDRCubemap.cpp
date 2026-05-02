@@ -1,6 +1,6 @@
 #include "Engine/HDRCubemap.hpp"
-#include "Engine/Mesh/MeshManager.hpp"
-#include "Engine/Shader/ShaderManager.hpp"
+#include "Engine/Manager/MeshManager.hpp"
+#include "Engine/Manager/ShaderManager.hpp"
 #include "Engine/Texture/HDRCubemapTexture.hpp"
 
 #include "GL/glew.h"

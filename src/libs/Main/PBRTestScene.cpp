@@ -1,7 +1,7 @@
 #include "PBRTestScene.hpp"
 #include "Constanst.hpp"
 
-#include "Engine/Mesh/MeshManager.hpp"
+#include "Engine/Manager/MeshManager.hpp"
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Manager/InputManager.hpp"
 

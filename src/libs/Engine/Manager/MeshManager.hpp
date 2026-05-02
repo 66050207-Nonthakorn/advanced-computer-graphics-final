@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "Mesh.hpp"
+#include "Engine/Mesh/Mesh.hpp"
 
 class MeshManager {
 public:

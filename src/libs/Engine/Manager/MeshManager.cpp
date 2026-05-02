@@ -1,4 +1,4 @@
-#include "Engine/Mesh/MeshManager.hpp"
+#include "Engine/Manager/MeshManager.hpp"
 #include "Engine/Mesh/MeshLoader.hpp"
 
 #include <iostream>
@@ -17,7 +17,7 @@ std::shared_ptr<Mesh> MeshManager::get(const std::string &name) {
     if (name == "cube") {
         data = MeshData::Factory::createCube();
     }
-    else if (name == "triangle"){
+    else if (name == "triangle") {
         data = MeshData::Factory::createTriangle();
     }
     else if (name == "sphere") {

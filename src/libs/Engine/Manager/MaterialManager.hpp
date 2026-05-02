@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "Material.hpp"
+#include "Engine/Material/Material.hpp"
 
 class MaterialManager {
 public:
