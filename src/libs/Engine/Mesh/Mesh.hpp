@@ -9,5 +9,5 @@ public:
     size_t indexCount = 0;
     
     Mesh(const MeshData&);
-    ~Mesh();
+    virtual ~Mesh();
 };

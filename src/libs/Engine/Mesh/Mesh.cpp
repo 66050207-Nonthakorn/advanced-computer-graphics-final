@@ -35,7 +35,7 @@ Mesh::Mesh(const MeshData& data) {
     glBindVertexArray(0);
 }
 
-Mesh::~Mesh() {
+Mesh::~Mesh() noexcept {
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);

@@ -62,6 +62,16 @@ MainScene::MainScene() {
     plane->transform.setPosition({0, -2, 0});
     plane->transform.setScale({10, 1, 10});
 
+    // Cloth — 30x30 grid, 4x4 world units, pinned at top two corners
+    cloth = std::make_shared<ClothMesh>(30, 30, 4.0f, 4.0f);
+    cloth->wind = { 0.0f, 0.0f, 1.0f };
+    cloth->windGustAmplitude = 4.0f;
+    
+    auto clothObj = std::make_shared<SceneObject>();
+    clothObj->mesh = cloth;
+    clothObj->material = MaterialManager::instance().get("cloth");
+    clothObj->transform.setPosition({-4, 4, 0});
+
     PointLight light;
     light.position = {0.0, 2.5, 0.0};
     light.color = {1.0, 1.0, 1.0};
@@ -77,6 +87,7 @@ MainScene::MainScene() {
     this->sceneObjects.push_back(plane);
     this->sceneObjects.push_back(face);
     this->sceneObjects.push_back(face2);
+    this->sceneObjects.push_back(clothObj);
 
     this->lights.emplace_back(light);
 }
@@ -115,4 +126,13 @@ void MainScene::update(float dt) {
     }
 
     camera.target = camera.position + glm::normalize(front);
+
+    if (InputManager::instance().isKeyPressed(GLFW_KEY_UP)) {
+        cloth->windGustAmplitude += 0.1;
+    }
+    else if (InputManager::instance().isKeyPressed(GLFW_KEY_DOWN)) {
+        cloth->windGustAmplitude -= 0.1;
+    }
+
+    cloth->update(dt);
 }
