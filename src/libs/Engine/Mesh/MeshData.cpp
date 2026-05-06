@@ -73,6 +73,18 @@ MeshData MeshData::Factory::createPlane() {
     return meshData;
 }
 
+MeshData MeshData::Factory::createQuad() {
+    MeshData meshData;
+    meshData.vertices = {
+        {{-0.5f, -0.5f, 0}, {0, 0, 1}, {0, 0}},
+        {{ 0.5f, -0.5f, 0}, {0, 0, 1}, {1, 0}},
+        {{ 0.5f,  0.5f, 0}, {0, 0, 1}, {1, 1}},
+        {{-0.5f,  0.5f, 0}, {0, 0, 1}, {0, 1}},
+    };
+    meshData.indices = { 0, 1, 2, 2, 3, 0 };
+    return meshData;
+}
+
 MeshData MeshData::Factory::createSphere(int stacks, int slices) {
     MeshData meshData;
     static constexpr float PI = 3.14159265358979323846f;

@@ -32,6 +32,7 @@ public:
     Material(const std::shared_ptr<Shader>& shader);
     virtual void bindPerFrame(const Material::PerFrameContext& context) = 0;
     virtual void bindPerObject(const Material::PerObjectContext& context) = 0;
+    virtual bool isTransparent() const { return false; }
     virtual ~Material() = default;
     
 protected:

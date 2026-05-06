@@ -19,7 +19,7 @@ public:
     struct Command {
         enum class Type {
             ClothWind, ClothWindGust, ClothDamping, ClothGravity, ClothIterations,
-            LightPos, LightIntensity, LightColor,
+            LightDebug, LightPos, LightIntensity, LightColor,
             DirLightDir, DirLightIntensity,
             DrawFull, DrawLine, DrawPoint,
             Unknown

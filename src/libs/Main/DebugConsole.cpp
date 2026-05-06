@@ -30,11 +30,15 @@ static void printHelp() {
         "  cloth.damping <val>            set cloth damping (0-1)\n"
         "  cloth.gravity <x> <y> <z>      set gravity vector\n"
         "  cloth.iterations <n>           set solver iterations\n"
+        "  light.debug <val>              show position of all point lights (0-1)"
         "  light.pos <x> <y> <z>          set point light[0] position\n"
         "  light.intensity <val>          set point light[0] intensity\n"
         "  light.color <r> <g> <b>        set point light[0] color\n"
         "  dir.dir <x> <y> <z>            set directional light direction\n"
         "  dir.intensity <val>            set directional light intensity\n"
+        "  draw.full                      set draw mode to normal\n"
+        "  draw.line                      set draw mode to draw line only\n"
+        "  draw.point                     set draw mode to draw point only\n"
         "  help                           show this message\n"
         "------------------------------\n";
 }
@@ -90,6 +94,10 @@ void DebugConsole::parse(const std::string& line) {
     else if (token == "cloth.iterations") {
         if (!readFloat(cmd.f0)) goto bad;
         cmd.type = Command::Type::ClothIterations;
+    }
+    else if (token == "light.debug") {
+        if (!readFloat(cmd.f0) && (cmd.f0 < 0 || cmd.f0 > 1)) goto bad;
+        cmd.type = Command::Type::LightDebug;
     }
     else if (token == "light.pos") {
         if (!readVec3(cmd.f0, cmd.f1, cmd.f2)) goto bad;

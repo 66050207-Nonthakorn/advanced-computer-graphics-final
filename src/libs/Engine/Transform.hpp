@@ -16,10 +16,16 @@ public:
     void setRotation(const glm::vec3& rotation);
     void setScale(const glm::vec3& scale);
 
+    glm::vec3 getForward();
+    glm::vec3 getUp();
+    glm::vec3 getRight();
+
     void setParent(Transform* parent);
 
     glm::mat4 getLocalMatrix();
     glm::mat4 getWorldMatrix();
+
+    void lookAt(const glm::vec3& target, const glm::vec3& up = glm::vec3(0, 1, 0));
 
 private:
     bool isDirty;

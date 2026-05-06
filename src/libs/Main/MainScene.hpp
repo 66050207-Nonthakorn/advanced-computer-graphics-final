@@ -21,5 +21,7 @@ private:
     DebugConsole debugConsole;
     std::vector<DebugConsole::Command> pendingCmds;
 
+    std::vector<std::shared_ptr<SceneObject>> lightIcons;
+
     void applyDebugCommands();
 };

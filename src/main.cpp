@@ -9,6 +9,7 @@
 #include "Engine/Manager/MaterialManager.hpp"
 #include "Engine/Manager/InputManager.hpp"
 #include "Engine/Material/BlinnPhongMaterial.hpp"
+#include "Engine/Material/UnlitMaterial.hpp"
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Texture/Texture2D.hpp"
 #include "Engine/Texture/BRDFLUTTexture.hpp"
@@ -76,6 +77,7 @@ static void loadAssets(const Window& window) {
 
     inputManager.init(window.getHandle());
 
+    shaderManager.load("unlit", "Shaders/unlit.vert", "Shaders/unlit.frag");
     shaderManager.load("blinn-phong", "Shaders/blinn-phong.vert", "Shaders/blinn-phong.frag");
     shaderManager.load("pbr", "Shaders/pbr.vert", "Shaders/pbr.frag");
     shaderManager.load("shadow", "Shaders/shadow.vert", "Shaders/shadow.frag");
@@ -87,7 +89,10 @@ static void loadAssets(const Window& window) {
 
     textureManager.add("dirt", std::make_shared<Texture2D>("Textures/dirt.jpg"));
     textureManager.add("face", std::make_shared<Texture2D>("Textures/face.jpg"));    
-    textureManager.add("night-sky-hdr",std::make_shared<HDREquirectangularTexture>("Textures/Cubemap/NightSky/night.hdr"));
+    textureManager.add("light-icon", std::make_shared<Texture2D>("Textures/light-bulb.png"));
+
+    textureManager.add("night-hdr",std::make_shared<HDREquirectangularTexture>("Textures/Cubemap/Night.hdr"));
+    textureManager.add("nebula-hdr",std::make_shared<HDREquirectangularTexture>("Textures/Cubemap/Nebula.hdr"));
     textureManager.add("brdf-lut-512", std::make_shared<BRDFLUTTexture>(512));
 
     // PBR Textures
@@ -105,6 +110,8 @@ static void loadAssets(const Window& window) {
     // Add Materials
     materialManager.add("dirt", std::make_shared<BlinnPhongMaterial>(textureManager.get("dirt")));
     materialManager.add("face", std::make_shared<BlinnPhongMaterial>(textureManager.get("face")));
+    materialManager.add("light-icon", std::make_shared<UnlitMaterial>(textureManager.get("light-icon")));
+
     materialManager.addPBR("default", "default");
     materialManager.addPBR("cloth", "cloth", 2.0f);
     materialManager.addPBR("silver", "silver");

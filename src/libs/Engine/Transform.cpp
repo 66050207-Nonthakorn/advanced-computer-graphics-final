@@ -13,9 +13,11 @@ void Transform::setPosition(const glm::vec3& position) { isDirty = true; this->p
 void Transform::setRotation(const glm::vec3& rotation) { isDirty = true; this->rotation = rotation; }
 void Transform::setScale(const glm::vec3& scale)       { isDirty = true; this->scale = scale; }
 
-void Transform::setParent(Transform* p) {
-    parent = p;
-}
+glm::vec3 Transform::getForward() { return glm::normalize(glm::vec3(getWorldMatrix()[2])); }
+glm::vec3 Transform::getUp()      { return glm::normalize(glm::vec3(getWorldMatrix()[1])); }
+glm::vec3 Transform::getRight()   { return glm::normalize(glm::vec3(getWorldMatrix()[0])); }
+
+void Transform::setParent(Transform* p) { parent = p; }
 
 glm::mat4 Transform::getLocalMatrix() {
     if (isDirty) {
@@ -30,6 +32,21 @@ glm::mat4 Transform::getWorldMatrix() {
         return parent->getWorldMatrix() * getLocalMatrix();
     }
     return getLocalMatrix();
+}
+
+void Transform::lookAt(const glm::vec3& target, const glm::vec3& up) {
+    glm::vec3 forward = glm::normalize(target - position);
+    glm::vec3 right   = glm::normalize(glm::cross(forward, up));
+    glm::vec3 realUp  = glm::cross(right, forward);
+
+    localMatrix = glm::mat4(
+        glm::vec4(right,    0),
+        glm::vec4(realUp,   0),
+        glm::vec4(forward,  0),
+        glm::vec4(position, 1)
+    );
+    localMatrix = glm::scale(localMatrix, scale);
+    isDirty = false;
 }
 
 void Transform::recomputeLocal() {

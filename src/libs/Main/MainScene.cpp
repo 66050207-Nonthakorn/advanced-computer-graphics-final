@@ -23,7 +23,7 @@ MainScene::MainScene() {
     this->camera = movableCamera;
 
     cubemap = HDRCubemap(
-        TextureManager::instance().get("night-sky-hdr"),
+        TextureManager::instance().get("nebula-hdr"),
         TextureManager::instance().get("brdf-lut-512")
     );
 
@@ -34,7 +34,7 @@ MainScene::MainScene() {
     auto object2 = std::make_shared<SceneObject>();
     object2->transform.setPosition({2, 1, 0});
     object2->mesh = MeshManager::instance().get("sphere");
-    object2->material = MaterialManager::instance().get("titanium");
+    object2->material = MaterialManager::instance().get("silver");
 
     auto object3 = std::make_shared<SceneObject>();
     object3->transform.setPosition({4, 1, 0});
@@ -74,10 +74,15 @@ MainScene::MainScene() {
     light.position = {0.0, 2.5, 0.0};
     light.color = {1.0, 1.0, 1.0};
     light.intensity = 20.0f;
+    
+    auto lightIcon = std::make_shared<SceneObject>();
+    lightIcon->mesh = MeshManager::instance().get("quad");
+    lightIcon->material = MaterialManager::instance().get("light-icon");
+    this->lightIcons.emplace_back(lightIcon);
 
     this->directionalLight.direction = glm::normalize(glm::vec3(-1.0f, -1.0f, -0.5f));
     this->directionalLight.color = glm::vec3(0.2f, 0.2f, 0.2f);
-    this->directionalLight.intensity = 10.0f;
+    this->directionalLight.intensity = 20.0f;
 
     this->sceneObjects.emplace_back(object);
     this->sceneObjects.emplace_back(object2);
@@ -87,6 +92,7 @@ MainScene::MainScene() {
     this->sceneObjects.emplace_back(face2);
     this->sceneObjects.emplace_back(clothObj);
     this->sceneObjects.emplace_back(movableCamera);
+    this->sceneObjects.emplace_back(lightIcon);
 
     this->lights.emplace_back(light);
 }
@@ -113,6 +119,11 @@ void MainScene::applyDebugCommands() {
                 cloth->solverIterations = static_cast<int>(cmd.f0);
                 break;
 
+            case C::Type::LightDebug:
+                for (auto& light: lightIcons) {
+                    light->isActive = static_cast<bool>(cmd.f0);
+                }
+                break;
             case C::Type::LightPos:
                 if (!lights.empty())
                     lights[0].position = { cmd.f0, cmd.f1, cmd.f2 };
@@ -172,4 +183,7 @@ void MainScene::update(float dt) {
     this->lights[0].position.x = orbitRadius * std::cos(lightOrbitTime * orbitSpeed);
     this->lights[0].position.y = lightHeight;
     this->lights[0].position.z = orbitRadius * std::sin(lightOrbitTime * orbitSpeed);
+
+    lightIcons[0]->transform.setPosition(lights[0].position);
+    lightIcons[0]->transform.lookAt(camera->position);
 }

@@ -10,7 +10,10 @@
 #include "Renderer.hpp"
 
 Renderer::Renderer(const Window &window)
-    : window(window) { }
+    : window(window)
+{
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
 
 void Renderer::clearScreen() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -25,9 +28,10 @@ struct FlatNode {
 };
 
 void collectNodes(const std::shared_ptr<SceneObject>& node, std::vector<FlatNode>& out) {
-    if (node->mesh) {
+    if (node->mesh && node->isActive) {
         out.push_back({ node.get(), node->transform.getWorldMatrix() });
     }
+
     for (auto& child : node->children) {
         collectNodes(child, out);
     }
@@ -65,32 +69,50 @@ void Renderer::draw(Scene& scene) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-    // Lighting pass — sort by material to minimize shader switches
+    // Lighting pass — opaque first (grouped by material), transparent last (back-to-front)
+    glm::vec3 camPos = scene.camera->position;
     std::sort(allNodes.begin(), allNodes.end(),
-        [](const auto& a, const auto& b) {
-            return a.obj->material.get() < b.obj->material.get();
+        [&camPos](const auto& a, const auto& b) {
+            if (a.obj->material.get() != b.obj->material.get())
+                return a.obj->material.get() < b.obj->material.get(); // group opaques
+            
+            // far to near
+            glm::vec3 pa = glm::vec3(a.worldMatrix[3]);
+            glm::vec3 pb = glm::vec3(b.worldMatrix[3]);
+            
+            return glm::dot(pa - camPos, pa - camPos) > glm::dot(pb - camPos, pb - camPos);
         });
 
-    Material* lastMaterial = nullptr;
-    for (auto& node : allNodes) {
-        Material* mat = node.obj->material.get();
-        if (mat != lastMaterial) {
-            unsigned int iblIrr  = scene.cubemap.iblIrradianceMap ? scene.cubemap.iblIrradianceMap->getId() : 0;
-            unsigned int iblPref = scene.cubemap.iblPrefilterMap  ? scene.cubemap.iblPrefilterMap->getId()  : 0;
-            unsigned int iblLUT  = scene.cubemap.iblBrdfLUT       ? scene.cubemap.iblBrdfLUT->getId()       : 0;
-            int iblMips = scene.cubemap.iblPrefilterMips;
+    auto drawNodes = [&](bool transparent) {
+        Material* lastMaterial = nullptr;
+        for (auto& node : allNodes) {
+            if (node.obj->material->isTransparent() != transparent) continue;
+            Material* mat = node.obj->material.get();
+            if (mat != lastMaterial) {
+                unsigned int iblIrr  = scene.cubemap.iblIrradianceMap ? scene.cubemap.iblIrradianceMap->getId() : 0;
+                unsigned int iblPref = scene.cubemap.iblPrefilterMap  ? scene.cubemap.iblPrefilterMap->getId()  : 0;
+                unsigned int iblLUT  = scene.cubemap.iblBrdfLUT       ? scene.cubemap.iblBrdfLUT->getId()       : 0;
+                int iblMips = scene.cubemap.iblPrefilterMips;
 
-            mat->bindPerFrame({ *scene.camera, scene.lights, scene.directionalLight,
-                                scene.directionalLight.getDepthMapID(), lightSpaceMat,
-                                iblIrr, iblPref, iblMips, iblLUT });
-            lastMaterial = mat;
+                mat->bindPerFrame({ *scene.camera, scene.lights, scene.directionalLight,
+                                    scene.directionalLight.getDepthMapID(), lightSpaceMat,
+                                    iblIrr, iblPref, iblMips, iblLUT });
+                lastMaterial = mat;
+            }
+            node.obj->material->bindPerObject({ node.worldMatrix });
+            glBindVertexArray(node.obj->mesh->vao);
+            glDrawElements(GL_TRIANGLES, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
         }
+    };
 
-        node.obj->material->bindPerObject({ node.worldMatrix });
+    drawNodes(false); // Draw alpha = 1.0
 
-        glBindVertexArray(node.obj->mesh->vao);
-        glDrawElements(GL_TRIANGLES, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
-    }
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    drawNodes(true); // Draw alpha < 1.0
+
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
 
     // Cubemap
     if (scene.cubemap.environmentMap != nullptr) {
