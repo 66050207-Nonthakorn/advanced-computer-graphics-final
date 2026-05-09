@@ -2,6 +2,7 @@
 
 #include "Engine/Vertex.hpp"
 #include <vector>
+#include <string>
 
 struct MeshData {
     std::vector<Vertex> vertices;
@@ -10,7 +11,6 @@ struct MeshData {
     struct Factory {
         static MeshData createTriangle();
         static MeshData createQuad();
-
         static MeshData createCube();
         static MeshData createPlane();
         static MeshData createSphere(int stacks = 32, int slices = 32);

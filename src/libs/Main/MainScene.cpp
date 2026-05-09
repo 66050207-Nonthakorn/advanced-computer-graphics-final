@@ -1,105 +1,171 @@
-#include "Main/MainScene.hpp"
-#include "Main/Constanst.hpp"
-#include "Main/MoveableCamera.hpp"
-#include "Main/DebugConsole.hpp"
+#include "MainScene.hpp"
+
+#include "glfw/glfw3.h"
+
+#include "Main/Constants.hpp"
 
 #include "Engine/Manager/MeshManager.hpp"
 #include "Engine/Manager/MaterialManager.hpp"
 #include "Engine/Material/PBRMaterial.hpp"
-#include "Engine/Light/PointLight.hpp"
-#include "Engine/Manager/InputManager.hpp"
-#include "Engine/Manager/TextureManager.hpp"
+#include "Engine/Particle/ParticleMesh.hpp"
 
-#include "glfw/glfw3.h"
-
-#include <cmath>
-#include <filesystem>
-#include <iostream>
+#include "glm/glm.hpp"
 
 MainScene::MainScene() {
-    float aspect = static_cast<float>(Constanst::SCREEN_WIDTH) / Constanst::SCREEN_HEIGHT;
-
-    movableCamera = std::make_shared<MovableCamera>(60.0f, aspect, 0.1f, 100.0f);
+    // Camera
+    movableCamera = std::make_shared<MovableCamera>(60.0f, Constants::ASPECT_RATIO, 0.1f, 100.0f);
+    movableCamera->position = {0, 4.5f, 4.5f};
+    movableCamera->speed = 10.0f;
     this->camera = movableCamera;
+    this->sceneObjects.emplace_back(movableCamera);
 
+    // Cubemap
     cubemap = HDRCubemap(
-        TextureManager::instance().get("nebula-hdr"),
+        TextureManager::instance().get("sunset-hdr"),
         TextureManager::instance().get("brdf-lut-512")
     );
+    cubemap.iblIntensity = 0.075f;
 
-    auto object = std::make_shared<SceneObject>();
-    object->mesh = MeshManager::instance().get("sphere");
-    object->material = MaterialManager::instance().get("cloth");
+    // Scene objects
+    cupSmokeParticle = std::make_shared<ParticleMesh>(1000);
+    cupSmokeParticle->emitRate     = 150.0f;
+    cupSmokeParticle->gravity      = { 0.0f, -0.08f, 0.0f };
+    cupSmokeParticle->minLife      = 3.5f;
+    cupSmokeParticle->maxLife      = 5.5f;
+    cupSmokeParticle->minSize      = 0.08f;
+    cupSmokeParticle->maxSize      = 0.12f;
+    cupSmokeParticle->minVelocity  = { -0.15f, 0.8f, -0.15f };
+    cupSmokeParticle->maxVelocity  = {  0.15f, 1.3f,  0.15f };
+    cupSmokeParticle->startColor   = { 0.28f, 0.28f, 0.30f, 0.20f };
+    cupSmokeParticle->endColor     = { 0.78f, 0.78f, 0.80f, 0.0f };
 
-    auto object2 = std::make_shared<SceneObject>();
-    object2->transform.setPosition({2, 1, 0});
-    object2->mesh = MeshManager::instance().get("sphere");
-    object2->material = MaterialManager::instance().get("silver");
-
-    auto object3 = std::make_shared<SceneObject>();
-    object3->transform.setPosition({4, 1, 0});
-    object3->transform.setScale({10, 10, 10});
-    object3->mesh = MeshManager::instance().getFromFile("Models/Bread.obj");
-    object3->material = MaterialManager::instance().get("bread");
-
-    auto face = std::make_shared<SceneObject>();
-    face->transform.setPosition({ 2, 2, 0});
-    face->transform.setScale({.01, .01, .01});
-    face->mesh = MeshManager::instance().getFromFile("Models/Caligula.obj");
-    face->material = MaterialManager::instance().get("titanium");
-
-    auto face2 = std::make_shared<SceneObject>();
-    face2->transform.setPosition({4, 2, 0});
-    face2->transform.setScale({.01, .01, .01});
-    face2->mesh = MeshManager::instance().getFromFile("Models/Caligula.obj");
-    face2->material = MaterialManager::instance().get("gold");
-
-    auto plane = std::make_shared<SceneObject>();
-    plane->mesh = MeshManager::instance().get("plane");
-    plane->material = MaterialManager::instance().get("metal");
-    plane->transform.setPosition({0, -2, 0});
-    plane->transform.setScale({10, 1, 10});
-
-    // Cloth — 30x30 grid, 4x4 world units, pinned at top two corners
-    cloth = std::make_shared<ClothMesh>(30, 30, 4.0f, 4.0f);
-    cloth->wind = { 1.0f, 0.0f, 1.0f };
-    cloth->windGustAmplitude = 4.0f;
+    cloth = std::make_shared<ClothMesh>(100, 100, 12.0f, 4.5f);
+    cloth->wind = { 1.0f, 0.0f, 1.0f }; 
+    cloth->solverIterations = 15;
+    cloth->damping = 0.99f;
+    cloth->windGustAmplitude = 18.0f;
     
-    auto clothObj = std::make_shared<SceneObject>();
-    clothObj->mesh = cloth;
-    clothObj->material = MaterialManager::instance().get("cloth");
-    clothObj->transform.setPosition({-4, 4, 0});
+    cloth->pin(0);
+    cloth->pin(99);
+
+    this->sceneObjects.emplace_back(
+        SceneObject::builder()
+            .withMesh(MeshManager::instance().getFromFile("Models/room2.obj"))
+            .withMaterial(MaterialManager::instance().get("marble"))
+            .withRotation({0.0f, 180.0f, 0.0f})
+            .withChild(
+                SceneObject::builder()
+                    .withMesh(MeshManager::instance().getFromFile("Models/table.obj"))
+                    .withMaterial(MaterialManager::instance().get("table"))
+                    .withPosition({-2.0f, 0.0f, -3.5f})
+                    .withRotation({0.0f, 90.0f, 0.0f})
+                    .withScale({0.2f, 0.2f, 0.2f})
+                    .withChild(
+                        SceneObject::builder()
+                            .withMesh(MeshManager::instance().getFromFile("Models/Cup.obj"))
+                            .withMaterial(MaterialManager::instance().get("glass"))
+                            .withPosition({7.0f, 22.0f, 0.0f})
+                            .withRotation({0.0f, 90.0f, 0.0f})
+                            .withScale({30.0f, 30.0f, 30.0f})
+                            .withChild(
+                                SceneObject::builder()
+                                    .withMesh(cupSmokeParticle)
+                                    .withMaterial(MaterialManager::instance().get("particle"))
+                                    .withPosition({0.0f, 0.0f, 0.0f})
+                                    .withRotation({0.0f, -180.0f, 0.0f})
+                                    .withScale({0.25f, 0.25f, 0.25f})
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .withChild(
+                        SceneObject::builder()
+                            .withMesh(MeshManager::instance().getFromFile("Models/macbook neo.obj"))
+                            .withMaterial(MaterialManager::instance().get("macbook"))
+                            .withRotation({0.0f, 180.0f, 0.0f})
+                            .withPosition({-3.5f, 23.0f, 0.0f})
+                            .withScale({50.0f, 50.0f, 50.0f})
+                            .build()
+                    )
+                    .build()
+            )
+            .withChild(
+                SceneObject::builder()
+                    .withMesh(cloth)
+                    .withMaterial(MaterialManager::instance().get("cloth"))
+                    .withRotation({0.0f, -90.0f, 0.0f})
+                    .withPosition({-11.0f, 10.0f, 0.0f})
+                    .build()
+            )
+            .build()
+    );
+
+    // Lighting
+    this->directionalLight.direction = glm::normalize(glm::vec3(-1.0f, -0.5f, 0.5f));
+    this->directionalLight.color     = glm::vec3(0.95f, 0.5f, 0.21f);
+    this->directionalLight.intensity = 15.0f;
 
     PointLight light;
-    light.position = {0.0, 2.5, 0.0};
-    light.color = {1.0, 1.0, 1.0};
-    light.intensity = 20.0f;
-    
-    auto lightIcon = std::make_shared<SceneObject>();
-    lightIcon->mesh = MeshManager::instance().get("quad");
-    lightIcon->material = MaterialManager::instance().get("light-icon");
-    this->lightIcons.emplace_back(lightIcon);
-
-    this->directionalLight.direction = glm::normalize(glm::vec3(-1.0f, -1.0f, -0.5f));
-    this->directionalLight.color = glm::vec3(0.2f, 0.2f, 0.2f);
-    this->directionalLight.intensity = 20.0f;
-
-    this->sceneObjects.emplace_back(object);
-    this->sceneObjects.emplace_back(object2);
-    this->sceneObjects.emplace_back(object3);
-    this->sceneObjects.emplace_back(plane);
-    this->sceneObjects.emplace_back(face);
-    this->sceneObjects.emplace_back(face2);
-    this->sceneObjects.emplace_back(clothObj);
-    this->sceneObjects.emplace_back(movableCamera);
-    this->sceneObjects.emplace_back(lightIcon);
-
+    light.position  = {0.0f, 10.0f, 10.0f};
+    light.color     = {1.0f, 0.0f, 0.0f};
+    light.intensity = 100.0f;
     this->lights.emplace_back(light);
+    this->sceneObjects.emplace_back(
+        SceneObject::builder()
+            .withName("LightIcon")
+            .withActive(false)
+            .withMesh(MeshManager::instance().get("quad"))
+            .withMaterial(MaterialManager::instance().get("light-icon"))
+            .withPosition(light.position)
+            .build()
+    );
+
+    PointLight light2;
+    light2.position  = {5.0f, 10.0f, 5.0f};
+    light2.color     = {0.85f, 0.95f, 1.0f};
+    light2.intensity = 100.0f;
+    this->lights.emplace_back(light2);
+    this->sceneObjects.emplace_back(
+        SceneObject::builder()
+            .withName("LightIcon")
+            .withActive(false)
+            .withMesh(MeshManager::instance().get("quad"))
+            .withMaterial(MaterialManager::instance().get("light-icon"))
+            .withPosition(light2.position)
+            .build()
+    );
+    
+    // Debug console
+    debugConsole = std::make_shared<DebugConsole>();
+}
+
+void MainScene::update(float dt) {
+    debugConsole->poll(pendingCmds);
+    applyDebugCommands();
+
+    cloth->update(dt);
+    cupSmokeParticle->update(dt, camera->getView());
+
+    if (pointLightAnimationEnabled && !lights.empty()) {
+        lights[0].intensity = 20.0f + 10.0f * std::sin(glfwGetTime() * 2.0f);
+    }
+
+    Scene::update(dt);
+}
+
+namespace {
+    // Helper function to set debug mode for all PBR materials
+    void setDebugMode(int mode) {
+        static const char* pbrNames[] = { "default", "coffee-cup", "table", "marble", "glass" };
+        for (auto& name : pbrNames) {
+            auto mat = std::dynamic_pointer_cast<PBRMaterial>(MaterialManager::instance().get(name));
+            if (mat) mat->debugMode = mode;
+        }
+    }
 }
 
 void MainScene::applyDebugCommands() {
     using C = DebugConsole::Command;
-    debugConsole.poll(pendingCmds);
 
     for (auto& cmd : pendingCmds) {
         switch (cmd.type) {
@@ -119,29 +185,45 @@ void MainScene::applyDebugCommands() {
                 cloth->solverIterations = static_cast<int>(cmd.f0);
                 break;
 
-            case C::Type::LightDebug:
-                for (auto& light: lightIcons) {
-                    light->isActive = static_cast<bool>(cmd.f0);
+            case C::Type::PointLightDebug:
+                for (auto& sceneObject : sceneObjects) {
+                    if (sceneObject->name == "LightIcon") {
+                        sceneObject->isActive = static_cast<bool>(cmd.f0);
+                    }
                 }
                 break;
-            case C::Type::LightPos:
-                if (!lights.empty())
-                    lights[0].position = { cmd.f0, cmd.f1, cmd.f2 };
+            case C::Type::PointLightIntensity:
+                for (auto& light : lights) {
+                    light.intensity = cmd.f0;
+                }
+                pointLightAnimationEnabled = false;
                 break;
-            case C::Type::LightIntensity:
-                if (!lights.empty())
-                    lights[0].intensity = cmd.f0;
+            case C::Type::PointLightColor:
+                for (auto& light : lights) {
+                    light.color = { cmd.f0, cmd.f1, cmd.f2 };
+                }
                 break;
-            case C::Type::LightColor:
-                if (!lights.empty())
-                    lights[0].color = { cmd.f0, cmd.f1, cmd.f2 };
+            case C::Type::PointLightAnimate:
+                pointLightAnimationEnabled = static_cast<bool>(cmd.f0);
                 break;
 
-            case C::Type::DirLightDir:
+            case C::Type::DirectionalLightDirection:
                 directionalLight.direction = glm::normalize(glm::vec3(cmd.f0, cmd.f1, cmd.f2));
                 break;
-            case C::Type::DirLightIntensity:
+            case C::Type::DirectionalLightIntensity:
                 directionalLight.intensity = cmd.f0;
+                break;
+            case C::Type::DirectionalLightColor:
+                directionalLight.color = { cmd.f0, cmd.f1, cmd.f2 };
+                break;
+
+            case C::Type::CameraLock:
+                movableCamera->isLocked = static_cast<bool>(cmd.f0);
+                break;
+            case C::Type::CameraReset:
+                movableCamera->position = {0, 0, 3};
+                movableCamera->target = {0, 0, 0};
+                movableCamera->up = {0, 1, 0};
                 break;
 
             case C::Type::DrawFull:
@@ -153,6 +235,12 @@ void MainScene::applyDebugCommands() {
             case C::Type::DrawPoint:
                 glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
                 break;
+            
+            case C::Type::ShadingNormal:   setDebugMode(0); break;
+            case C::Type::ShadingShadow:   setDebugMode(1); break;
+            case C::Type::ShadingAmbient:  setDebugMode(2); break;
+            case C::Type::ShadingDiffuse:  setDebugMode(3); break;
+            case C::Type::ShadingSpecular: setDebugMode(4); break;
 
             default: break;
         }
@@ -161,29 +249,3 @@ void MainScene::applyDebugCommands() {
     pendingCmds.clear();
 }
 
-void MainScene::update(float dt) {
-    applyDebugCommands();
-    Scene::update(dt);
-
-    if (InputManager::instance().isKeyPressed(GLFW_KEY_UP)) {
-        cloth->windGustAmplitude += 0.1;
-    }
-    else if (InputManager::instance().isKeyPressed(GLFW_KEY_DOWN)) {
-        cloth->windGustAmplitude -= 0.1;
-    }
-
-    cloth->update(dt);
-
-    lightOrbitTime += dt;
-
-    constexpr float orbitRadius = 5.0f;
-    constexpr float orbitSpeed = 1.0f;
-    constexpr float lightHeight = 2.5f;
-
-    this->lights[0].position.x = orbitRadius * std::cos(lightOrbitTime * orbitSpeed);
-    this->lights[0].position.y = lightHeight;
-    this->lights[0].position.z = orbitRadius * std::sin(lightOrbitTime * orbitSpeed);
-
-    lightIcons[0]->transform.setPosition(lights[0].position);
-    lightIcons[0]->transform.lookAt(camera->position);
-}

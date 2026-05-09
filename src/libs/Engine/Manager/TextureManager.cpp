@@ -26,7 +26,7 @@ bool TextureManager::has(const std::string& name) const {
     return this->textures.count(name) > 0;
 }
 
-void TextureManager::addPBR(const std::string& name, const std::string& dir) {
+void TextureManager::addPBR(const std::string& name, const std::string& dir, bool isFlip) {
     struct PBRSlot {
         std::string keyword;
         bool isSRGB;
@@ -67,7 +67,7 @@ void TextureManager::addPBR(const std::string& name, const std::string& dir) {
             continue;
         }
 
-        add(name + "-" + slot.keyword, std::make_shared<Texture2D>(found, slot.isSRGB));
+        add(name + "-" + slot.keyword, std::make_shared<Texture2D>(found, slot.isSRGB, isFlip));
     }
 }
 

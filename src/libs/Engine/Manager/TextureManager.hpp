@@ -17,7 +17,7 @@ public:
     TextureManager& operator=(const TextureManager &) = delete;
 
     void add(const std::string& name, const std::shared_ptr<Texture>& texture);
-    void addPBR(const std::string& name, const std::string& dir);
+    void addPBR(const std::string& name, const std::string& dir, bool isFlip = true);
     bool has(const std::string& name) const;
 
     std::shared_ptr<Texture> get(const std::string& name);

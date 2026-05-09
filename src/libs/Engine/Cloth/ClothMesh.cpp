@@ -6,10 +6,6 @@
 #include <cmath>
 #include <cstdlib>
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 static MeshData buildInitialMeshData(int rows, int cols, float width, float height) {
     MeshData data;
 
@@ -34,10 +30,6 @@ static MeshData buildInitialMeshData(int rows, int cols, float width, float heig
 
     return data;
 }
-
-// ---------------------------------------------------------------------------
-// ClothMesh
-// ---------------------------------------------------------------------------
 
 ClothMesh::ClothMesh(int rows, int cols, float width, float height)
     : Mesh(buildInitialMeshData(rows, cols, width, height)),
@@ -74,10 +66,6 @@ void ClothMesh::buildGrid(float width, float height) {
         }
     }
 
-    // Pin top-left and top-right corners by default
-    particles[0].pinned              = true;
-    particles[cols - 1].pinned       = true;
-
     cpuVertices.resize(rows * cols);
 
     // Structural springs (horizontal + vertical)
@@ -110,8 +98,17 @@ void ClothMesh::addSpring(int a, int b) {
     springs.push_back({ a, b, len });
 }
 
-void ClothMesh::pin(int index)   { particles[index].pinned = true; }
-void ClothMesh::unpin(int index) { particles[index].pinned = false; }
+void ClothMesh::pin(int index)   {
+    if (index >= 0 && index < particles.size()) {
+        particles[index].pinned = true;
+    }
+}
+
+void ClothMesh::unpin(int index) {
+    if (index >= 0 && index < particles.size()) {
+        particles[index].pinned = false;
+    }
+}
 
 void ClothMesh::applyWind(float dt) {
     if (wind == glm::vec3(0.0f) && windGustAmplitude == 0.0f) return;
@@ -129,9 +126,9 @@ void ClothMesh::applyWind(float dt) {
             int i01 = i00 + cols;
             int i11 = i00 + cols + 1;
 
-            auto applyTri = [&](int a, int b, int c_) {
+            auto applyTri = [&](int a, int b, int c) {
                 glm::vec3 edge1 = particles[b].position - particles[a].position;
-                glm::vec3 edge2 = particles[c_].position - particles[a].position;
+                glm::vec3 edge2 = particles[c].position - particles[a].position;
                 glm::vec3 faceNormal = glm::cross(edge1, edge2);
                 float area = glm::length(faceNormal);
                 if (area < 1e-6f) return;
@@ -142,7 +139,7 @@ void ClothMesh::applyWind(float dt) {
 
                 if (!particles[a].pinned)  particles[a].position  += impulse;
                 if (!particles[b].pinned)  particles[b].position  += impulse;
-                if (!particles[c_].pinned) particles[c_].position += impulse;
+                if (!particles[c].pinned) particles[c].position += impulse;
             };
 
             applyTri(i00, i10, i01);
@@ -190,21 +187,21 @@ void ClothMesh::recalcNormals() {
     for (auto& p : particles) p.normal = glm::vec3(0.0f);
 
     // Accumulate face normals
-    for (int r = 0; r < rows - 1; ++r) {
-        for (int c = 0; c < cols - 1; ++c) {
-            int i00 = r * cols + c;
+    for (int row = 0; row < rows - 1; row++) {
+        for (int col = 0; col < cols - 1; col++) {
+            int i00 = row * cols + col;
             int i10 = i00 + 1;
             int i01 = i00 + cols;
             int i11 = i00 + cols + 1;
 
-            auto triNormal = [&](int a, int b, int c_) {
+            auto triNormal = [&](int a, int b, int c) {
                 glm::vec3 n = glm::cross(
                     particles[b].position - particles[a].position,
-                    particles[c_].position - particles[a].position
+                    particles[c].position - particles[a].position
                 );
                 particles[a].normal += n;
                 particles[b].normal += n;
-                particles[c_].normal += n;
+                particles[c].normal += n;
             };
 
             triNormal(i00, i10, i01);

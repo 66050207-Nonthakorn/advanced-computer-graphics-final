@@ -23,6 +23,7 @@ public:
         unsigned int iblPrefilterMap = 0;
         int iblPrefilterMips = 0;
         unsigned int iblBrdfLUT = 0;
+        float iblIntensity = 1.0f;
     };
 
     struct PerObjectContext {
@@ -33,6 +34,7 @@ public:
     virtual void bindPerFrame(const Material::PerFrameContext& context) = 0;
     virtual void bindPerObject(const Material::PerObjectContext& context) = 0;
     virtual bool isTransparent() const { return false; }
+    virtual bool isOverlay() const { return false; }
     virtual ~Material() = default;
     
 protected:

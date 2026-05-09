@@ -1,7 +1,9 @@
 #include "Engine/Manager/MaterialManager.hpp"
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Manager/TextureManager.hpp"
+#include "Engine/Texture/Texture2D.hpp"
 
+#include "glm/glm.hpp"
 #include <iostream>
 
 MaterialManager& MaterialManager::instance() {
@@ -28,6 +30,10 @@ void MaterialManager::addPBR(const std::string& name, const std::string& texture
     );
     mat->normalStrength = normalStrength;
     this->materials[name] = std::move(mat);
+}
+
+bool MaterialManager::has(const std::string& name) const {
+    return this->materials.count(name) > 0;
 }
 
 std::shared_ptr<Material> MaterialManager::get(const std::string& name) {

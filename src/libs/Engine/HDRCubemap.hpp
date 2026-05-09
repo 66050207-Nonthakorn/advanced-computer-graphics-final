@@ -26,6 +26,7 @@ public:
     std::shared_ptr<Texture> iblPrefilterMap;
     std::shared_ptr<Texture> iblBrdfLUT;
     int iblPrefilterMips = 0;
+    float iblIntensity = 0;
 
     std::shared_ptr<Mesh> cube;
     unsigned int id;

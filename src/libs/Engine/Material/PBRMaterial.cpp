@@ -15,16 +15,16 @@ PBRMaterial::PBRMaterial(
 void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
     this->shader->use();
 
-    const bool hasAlbedo = static_cast<bool>(this->albedo);
-    const bool hasAo = static_cast<bool>(this->ao);
-    const bool hasMetallic = static_cast<bool>(this->metallic);
-    const bool hasNormal = static_cast<bool>(this->normal);
+    const bool hasAlbedo    = static_cast<bool>(this->albedo);
+    const bool hasAo        = static_cast<bool>(this->ao);
+    const bool hasMetallic  = static_cast<bool>(this->metallic);
+    const bool hasNormal    = static_cast<bool>(this->normal);
     const bool hasRoughness = static_cast<bool>(this->roughness);
 
-    this->shader->bindTexture(0, hasAlbedo ? this->albedo->getId() : 0);
-    this->shader->bindTexture(1, hasAo ? this->ao->getId() : 0);
-    this->shader->bindTexture(2, hasMetallic ? this->metallic->getId() : 0);
-    this->shader->bindTexture(3, hasNormal ? this->normal->getId() : 0);
+    this->shader->bindTexture(0, hasAlbedo    ? this->albedo->getId()    : 0);
+    this->shader->bindTexture(1, hasAo        ? this->ao->getId()        : 0);
+    this->shader->bindTexture(2, hasMetallic  ? this->metallic->getId()  : 0);
+    this->shader->bindTexture(3, hasNormal    ? this->normal->getId()    : 0);
     this->shader->bindTexture(4, hasRoughness ? this->roughness->getId() : 0);
 
     this->shader->uniformInt("material.albedo", 0);
@@ -37,6 +37,7 @@ void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
     this->shader->uniformBool("useMetallicMap", hasMetallic);
     this->shader->uniformBool("useNormalMap", hasNormal);
     this->shader->uniformBool("useRoughnessMap", hasRoughness);
+    this->shader->uniformVec3("albedoColor", this->albedoColor);
     this->shader->uniformFloat("metallicValue", this->metallicValue);
     this->shader->uniformFloat("roughnessValue", this->roughnessValue);
 
@@ -67,6 +68,7 @@ void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
                         context.iblBrdfLUT != 0;
     
     this->shader->uniformBool("useIBL", useIBL);
+    this->shader->uniformFloat("iblIntensity", context.iblIntensity);
     
     if (useIBL) {
         glActiveTexture(GL_TEXTURE6);
@@ -86,6 +88,7 @@ void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
     }
 
     this->shader->uniformFloat("normalStrength", this->normalStrength);
+    this->shader->uniformInt("debugMode", this->debugMode);
 }
 
 void PBRMaterial::bindPerObject(const Material::PerObjectContext& context) {

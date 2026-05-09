@@ -5,6 +5,8 @@ MovableCamera::MovableCamera(float fovDegrees, float aspect, float nearPlane, fl
     : Camera(fovDegrees, aspect, nearPlane, farPlane), SceneObject() { }
 
 void MovableCamera::update(float dt) {
+    if (isLocked) return;
+
     glm::vec2 mouseDelta = InputManager::instance().getMouseDelta();
     yaw += mouseDelta.x * sensitivity;
     pitch -= mouseDelta.y * sensitivity;

@@ -1,5 +1,6 @@
 #include "Engine/Window.hpp"
 #include <iostream>
+#include "Window.hpp"
 
 Window::Window(const int width, const int height, const std::string& title) {
     if (glfwInit() == GLFW_FALSE) {
@@ -35,11 +36,6 @@ Window::Window(const int width, const int height, const std::string& title) {
         exit(1);
     }
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);
-    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
     glViewport(0, 0, buf_w, buf_h);
 }
 
@@ -65,6 +61,7 @@ void Window::close() {
 }
 
 void Window::setIsShowCursor(bool isShowCursor) {
+    this->isShowCursor = isShowCursor;
     int mode = (isShowCursor ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
     glfwSetInputMode(this->handle, GLFW_CURSOR, mode);
 }

@@ -16,10 +16,12 @@ public:
     bool shouldClose() const;
     void close();
 
+    bool getIsShowCursor() const { return isShowCursor; };
     void setIsShowCursor(bool isShowCursor);
 
     GLFWwindow* getHandle() const;
     
 private:
+    bool isShowCursor = false;
     GLFWwindow* handle;
 };

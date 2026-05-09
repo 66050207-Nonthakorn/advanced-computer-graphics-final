@@ -26,9 +26,10 @@ DirectionalLight::DirectionalLight() {
 }
 
 glm::mat4 DirectionalLight::getLightSpaceMatrix() const {
-    glm::vec3 lightPos = -glm::normalize(direction) * 30.0f;
+    glm::vec3 lightPos = -glm::normalize(direction) * 20.0f;
     glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 lightProj = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 0.1f, 100.0f);
+    
     return lightProj * lightView;
 }
 

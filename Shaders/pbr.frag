@@ -37,6 +37,7 @@ uniform bool useAoMap;
 uniform bool useMetallicMap;
 uniform bool useNormalMap;
 uniform bool useRoughnessMap;
+uniform vec3  albedoColor;
 uniform float metallicValue;
 uniform float roughnessValue;
 
@@ -47,12 +48,16 @@ uniform DirectionalLight directionalLight;
 uniform sampler2D shadowMap;
 uniform mat4 lightSpaceMatrix;
 
+// Debug: 0=off, 1=shadow only, 2=ambient only, 3=diffuse only, 4=specular only
+uniform int debugMode;
+
 // IBL
 uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D   brdfLUT;
-uniform float iblPrefilterMaxLod;
-uniform bool useIBL;
+uniform float       iblPrefilterMaxLod;
+uniform float       iblIntensity;
+uniform bool        useIBL;
 
 vec3 getNormalFromMap() {
     if (!useNormalMap) {
@@ -138,7 +143,7 @@ float shadowCalculation(vec4 fragPosLightSpace, vec3 N, vec3 L) {
 }
 
 void main() {
-    vec3  albedo     = useAlbedoMap ? texture(material.albedo, uv).rgb : vec3(1.0);
+    vec3  albedo     = useAlbedoMap ? texture(material.albedo, uv).rgb : albedoColor;
     float metallic   = useMetallicMap ? texture(material.metallic, uv).r : metallicValue;
     float roughness  = useRoughnessMap ? texture(material.roughness, uv).r : roughnessValue;
     float ao         = useAoMap ? texture(material.ao, uv).r : 0.3;
@@ -151,8 +156,11 @@ void main() {
     vec3 F0 = vec3(0.02);
     F0 = mix(F0, albedo, metallic);
 
-    // Outgoing light accumulated
-    vec3 Lo = vec3(0.0);
+    // Separate diffuse and specular for debug visibility
+    vec3 Lo_diff = vec3(0.0);
+    vec3 Lo_spec = vec3(0.0);
+
+    // Point lights
     for(int i = 0; i < pointLightCount; i++) {
         vec3 L = normalize(pointLights[i].position - worldPosition);
         vec3 H = normalize(V + L);
@@ -161,26 +169,25 @@ void main() {
         float attenuation = 1.0 / (dist * dist);
         vec3 radiance = pointLights[i].color * pointLights[i].intensity * attenuation;
 
-        // BRDF
         float D = distributionGGX(N, H, roughness);
         float G = geometrySmith(N, V, L, roughness);
         vec3  F = fresnelSchlick(max(dot(H, V), 0.0), F0);
         vec3 numerator = D * G * F;
         float denom = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-        vec3 specular = numerator / denom;
+        vec3 spec = numerator / denom;
 
-        // Energy conservation
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
         kD *= 1.0 - metallic;
 
         float NdotL = max(dot(N, L), 0.0);
 
-        // Accumulate
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+        Lo_diff += kD * albedo / PI * radiance * NdotL;
+        Lo_spec += spec * radiance * NdotL;
     }
 
     // Directional light contribution
+    float dirShadow = 0.0;
     {
         vec3 L = normalize(-directionalLight.direction);
         vec3 H = normalize(V + L);
@@ -191,7 +198,7 @@ void main() {
         vec3  F = fresnelSchlick(max(dot(H, V), 0.0), F0);
         vec3 numerator = D * G * F;
         float denom = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-        vec3 specular = numerator / denom;
+        vec3 spec = numerator / denom;
 
         vec3 kS = F;
         vec3 kD = vec3(1.0) - kS;
@@ -200,34 +207,65 @@ void main() {
         float NdotL = max(dot(N, L), 0.0);
 
         vec4 fragPosLightSpace = lightSpaceMatrix * vec4(worldPosition, 1.0);
-        float shadow = shadowCalculation(fragPosLightSpace, N, L);
+        dirShadow = shadowCalculation(fragPosLightSpace, N, L);
+        float lit = 1.0 - dirShadow;
 
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
+        Lo_diff += kD * albedo / PI * radiance * NdotL * lit;
+        Lo_spec += spec * radiance * NdotL * lit;
     }
 
-    // Ambient / IBL
-    vec3 ambient = vec3(0.03) * albedo * ao;
+    // Ambient / IBL — separated into diffuse and specular for debug
+    vec3 amb_diff = vec3(0.03) * albedo * ao;
+    vec3 amb_spec = vec3(0.0);
     if (useIBL) {
         float NdotV = max(dot(N, V), 0.0);
         vec3 F_ibl = fresnelSchlickRoughness(NdotV, F0, roughness);
         vec3 kD_ibl = (1.0 - F_ibl) * (1.0 - metallic);
 
-        // Diffuse
-        float iblDiffuseStrength = 0.5;
         vec3 irradiance = texture(irradianceMap, N).rgb;
-        vec3 diffuseIBL = kD_ibl * irradiance * albedo * iblDiffuseStrength;
+        amb_diff = kD_ibl * irradiance * albedo * ao * iblIntensity;
 
-        // Specular
+        // Specular — clamp prefiltered color to guard against HDR fireflies from bright stars/sun
         vec3 R = reflect(-V, N);
         float mip = roughness * iblPrefilterMaxLod;
-        vec3 prefilteredColor = textureLod(prefilterMap, R, mip).rgb;
+        vec3 prefilteredColor = min(textureLod(prefilterMap, R, mip).rgb, vec3(50.0));
         vec2 brdf = texture(brdfLUT, vec2(NdotV, roughness)).rg;
-        vec3 specularIBL = prefilteredColor * (F_ibl * brdf.x + brdf.y);
-
-        ambient = (diffuseIBL + specularIBL) * ao;
+        amb_spec = prefilteredColor * (F_ibl * brdf.x + brdf.y) * ao * iblIntensity;
     }
 
-    vec3 color = ambient + Lo;
+    // Debug modes
+    if (debugMode == 1) {
+        // Shadow only — grayscale; 1.0 = fully in shadow
+        fragColor = vec4(vec3(dirShadow), 1.0);
+        return;
+    }
+    if (debugMode == 2) {
+        // Ambient only (IBL diffuse + IBL specular)
+        vec3 c = amb_diff + amb_spec;
+        c = c / (c + vec3(1.0));
+        c = pow(c, vec3(1.0 / 2.2));
+        fragColor = vec4(c, 1.0);
+        return;
+    }
+    if (debugMode == 3) {
+        // Diffuse only (direct + IBL diffuse)
+        vec3 c = Lo_diff + amb_diff;
+        c = c / (c + vec3(1.0));
+        c = pow(c, vec3(1.0 / 2.2));
+        fragColor = vec4(c, 1.0);
+        return;
+    }
+    if (debugMode == 4) {
+        // Specular only (direct + IBL specular)
+        vec3 c = Lo_spec + amb_spec;
+        c = c / (c + vec3(1.0));
+        c = pow(c, vec3(1.0 / 2.2));
+        fragColor = vec4(c, 1.0);
+        return;
+    }
+
+    vec3 ambient = amb_diff + amb_spec;
+    vec3 color = ambient + Lo_diff + Lo_spec;
     color = color / (color + vec3(1.0)); // HDR Tonemapping (Reinhard)
     color = pow(color, vec3(1.0 / 2.2)); // Gamma correction
 

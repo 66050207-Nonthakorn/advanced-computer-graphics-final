@@ -10,14 +10,16 @@
 #include <vector>
 #include <memory>
 
-struct Scene {
+class Scene {
+public:
     std::shared_ptr<Camera> camera;
     std::vector<std::shared_ptr<SceneObject>> sceneObjects;
-    
     std::vector<PointLight> lights;
     DirectionalLight directionalLight;
     
     HDRCubemap cubemap;
 
     virtual void update(float dt);
+private:
+    void updateSceneObject(const std::shared_ptr<SceneObject>& obj, float dt);
 };

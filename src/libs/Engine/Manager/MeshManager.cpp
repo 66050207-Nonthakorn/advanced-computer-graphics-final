@@ -1,6 +1,8 @@
 #include "Engine/Manager/MeshManager.hpp"
 #include "Engine/Mesh/MeshLoader.hpp"
+#include "Engine/Manager/MaterialManager.hpp"
 
+#include <filesystem>
 #include <iostream>
 
 MeshManager& MeshManager::instance() {

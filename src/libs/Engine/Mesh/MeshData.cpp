@@ -1,5 +1,6 @@
 #include "Engine/Mesh/MeshData.hpp"
 #include <cmath>
+#include <unordered_map>
 #include "MeshData.hpp"
 
 MeshData MeshData::Factory::createTriangle() {

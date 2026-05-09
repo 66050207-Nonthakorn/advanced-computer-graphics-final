@@ -19,9 +19,11 @@ public:
     struct Command {
         enum class Type {
             ClothWind, ClothWindGust, ClothDamping, ClothGravity, ClothIterations,
-            LightDebug, LightPos, LightIntensity, LightColor,
-            DirLightDir, DirLightIntensity,
+            PointLightDebug, PointLightIntensity, PointLightColor, PointLightAnimate,
+            DirectionalLightDirection, DirectionalLightIntensity, DirectionalLightColor,
             DrawFull, DrawLine, DrawPoint,
+            CameraLock, CameraReset,
+            ShadingNormal, ShadingShadow, ShadingAmbient, ShadingDiffuse, ShadingSpecular,
             Unknown
         };
         Type type = Type::Unknown;

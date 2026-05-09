@@ -32,7 +32,7 @@ public:
 
     glm::vec3 gravity  = { 0.0f, -9.8f, 0.0f };
     glm::vec3 wind     = { 0.0f,  0.0f, 0.0f };
-    float     windGustAmplitude = 0.0f;
+    float     windGustAmplitude = 10.0f;
     float     damping  = 0.99f;
     int       solverIterations = 10;
 

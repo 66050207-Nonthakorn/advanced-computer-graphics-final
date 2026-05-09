@@ -16,6 +16,7 @@ public:
     void add(const std::string& name, std::shared_ptr<Material> material);
     void addPBR(const std::string& name, const std::string& texturePrefix, float normalStrength = 1.0f);
 
+    bool has(const std::string& name) const;
     std::shared_ptr<Material> get(const std::string& name);
 
 private:

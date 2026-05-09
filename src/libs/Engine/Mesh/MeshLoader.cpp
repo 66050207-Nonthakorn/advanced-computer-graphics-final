@@ -6,10 +6,14 @@
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
+#include <filesystem>
 #include <iostream>
 
 MeshData MeshLoader::loadFromObj(const std::string &path) {
     std::cout << "[MeshLoader] loading " << path << std::endl;
+
+    namespace fs = std::filesystem;
+    const std::string baseDir = fs::path(path).parent_path().string();
 
     float t = glfwGetTime();
 
@@ -33,12 +37,10 @@ MeshData MeshLoader::loadFromObj(const std::string &path) {
     std::vector<unsigned int> faceIndices;
 
     auto getIndex = [&](const std::string &token) -> unsigned int {
-        // Reserve slot in the map; skip parsing entirely on cache hit
         auto [it, inserted] = indexCache.try_emplace(token, (unsigned int)result.vertices.size());
         if (!inserted)
             return it->second;
 
-        // token format: v[/vt[/vn]] — parse with strtol to avoid istringstream overhead
         int vi = 0, ti = 0, ni = 0;
         const char* p = token.c_str();
         char* end;
@@ -91,7 +93,6 @@ MeshData MeshLoader::loadFromObj(const std::string &path) {
             uvs.emplace_back(t);
         }
         else if (keyword == "f") {
-            // Fan triangulation for polygons with 3+ vertices
             faceIndices.clear();
             std::string token;
             while (ss >> token)

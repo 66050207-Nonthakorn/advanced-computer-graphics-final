@@ -79,7 +79,8 @@ void main() {
             float saSample = 1.0 / (float(sampleCount) * pdf + 0.0001);
             float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
 
-            prefilteredColor += textureLod(environmentMap, L, mipLevel).rgb * NdotL;
+            vec3 sampleColor = min(textureLod(environmentMap, L, mipLevel).rgb, vec3(10.0));
+            prefilteredColor += sampleColor * NdotL;
             totalWeight += NdotL;
         }
     }

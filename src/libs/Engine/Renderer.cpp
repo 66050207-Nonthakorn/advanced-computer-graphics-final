@@ -1,6 +1,7 @@
 #include "Engine/Renderer.hpp"
 #include "Engine/Scene.hpp"
 #include "Engine/Manager/ShaderManager.hpp"
+#include "Engine/Material/ParticleMaterial.hpp"
 
 #include "GL/glew.h"
 #include "Engine/Light/DirectionalLight.hpp"
@@ -12,6 +13,9 @@
 Renderer::Renderer(const Window &window)
     : window(window)
 {
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
@@ -61,6 +65,8 @@ void Renderer::draw(Scene& scene) {
     shadowShader->uniformMat4("lightSpaceMatrix", lightSpaceMat);
 
     for (auto& node : allNodes) {
+        if (dynamic_cast<ParticleMaterial*>(node.obj->material.get())) continue;
+        if (node.obj->material->isOverlay()) continue;
         shadowShader->uniformMat4("model", node.worldMatrix);
         glBindVertexArray(node.obj->mesh->vao);
         glDrawElements(GL_TRIANGLES, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
@@ -86,17 +92,19 @@ void Renderer::draw(Scene& scene) {
     auto drawNodes = [&](bool transparent) {
         Material* lastMaterial = nullptr;
         for (auto& node : allNodes) {
+            if (node.obj->material->isOverlay()) continue;
             if (node.obj->material->isTransparent() != transparent) continue;
             Material* mat = node.obj->material.get();
             if (mat != lastMaterial) {
                 unsigned int iblIrr  = scene.cubemap.iblIrradianceMap ? scene.cubemap.iblIrradianceMap->getId() : 0;
                 unsigned int iblPref = scene.cubemap.iblPrefilterMap  ? scene.cubemap.iblPrefilterMap->getId()  : 0;
                 unsigned int iblLUT  = scene.cubemap.iblBrdfLUT       ? scene.cubemap.iblBrdfLUT->getId()       : 0;
+                float iblIntensity = scene.cubemap.iblIntensity;
                 int iblMips = scene.cubemap.iblPrefilterMips;
 
                 mat->bindPerFrame({ *scene.camera, scene.lights, scene.directionalLight,
                                     scene.directionalLight.getDepthMapID(), lightSpaceMat,
-                                    iblIrr, iblPref, iblMips, iblLUT });
+                                    iblIrr, iblPref, iblMips, iblLUT, iblIntensity });
                 lastMaterial = mat;
             }
             node.obj->material->bindPerObject({ node.worldMatrix });
@@ -105,17 +113,9 @@ void Renderer::draw(Scene& scene) {
         }
     };
 
-    drawNodes(false); // Draw alpha = 1.0
+    auto drawCubemap = [&]() {
+        if (scene.cubemap.environmentMap == nullptr) return;
 
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    drawNodes(true); // Draw alpha < 1.0
-
-    glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
-
-    // Cubemap
-    if (scene.cubemap.environmentMap != nullptr) {
         auto cubemapShader = ShaderManager::instance().get("cubemap");
         cubemapShader->use();
         cubemapShader->uniformMat4("view", scene.camera->getView());
@@ -132,5 +132,39 @@ void Renderer::draw(Scene& scene) {
 
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
+    };
+
+    drawNodes(false); // Draw alpha = 1.0
+    drawCubemap();
+
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    drawNodes(true); // Draw alpha < 1.0
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
+
+    // Overlay pass — billboards always render on top
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    {
+        Material* lastMaterial = nullptr;
+        for (auto& node : allNodes) {
+            if (!node.obj->material->isOverlay()) continue;
+            Material* mat = node.obj->material.get();
+            if (mat != lastMaterial) {
+                unsigned int iblIrr  = scene.cubemap.iblIrradianceMap ? scene.cubemap.iblIrradianceMap->getId() : 0;
+                unsigned int iblPref = scene.cubemap.iblPrefilterMap  ? scene.cubemap.iblPrefilterMap->getId()  : 0;
+                unsigned int iblLUT  = scene.cubemap.iblBrdfLUT       ? scene.cubemap.iblBrdfLUT->getId()       : 0;
+                mat->bindPerFrame({ *scene.camera, scene.lights, scene.directionalLight,
+                                    scene.directionalLight.getDepthMapID(), lightSpaceMat,
+                                    iblIrr, iblPref, scene.cubemap.iblPrefilterMips, iblLUT, scene.cubemap.iblIntensity });
+                lastMaterial = mat;
+            }
+            node.obj->material->bindPerObject({ node.worldMatrix });
+            glBindVertexArray(node.obj->mesh->vao);
+            glDrawElements(GL_TRIANGLES, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
+        }
     }
+    glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
 }
