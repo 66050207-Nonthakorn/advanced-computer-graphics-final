@@ -74,7 +74,6 @@ static void loadAssets(const Window& window) {
     auto& materialManager = MaterialManager::instance();
 
     shaderManager.load("unlit", "Shaders/unlit.vert", "Shaders/unlit.frag");
-    shaderManager.load("blinn-phong", "Shaders/blinn-phong.vert", "Shaders/blinn-phong.frag");
     shaderManager.load("pbr", "Shaders/pbr.vert", "Shaders/pbr.frag");
     shaderManager.load("shadow", "Shaders/shadow.vert", "Shaders/shadow.frag");
     shaderManager.load("cubemap", "Shaders/cubemap.vert", "Shaders/cubemap.frag");
