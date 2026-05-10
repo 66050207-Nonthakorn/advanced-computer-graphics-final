@@ -48,11 +48,12 @@ void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
     this->shader->uniformInt("pointLightCount", context.lights.size());
 
     for (size_t i = 0; i < context.lights.size(); i++) {
+        if (!context.lights[i]) continue;
         std::string base = "pointLights[" + std::to_string(i) + "]";
-        this->shader->uniformVec3(base + ".position", context.lights[i].position);
-        this->shader->uniformVec3(base + ".color", context.lights[i].color);
-        this->shader->uniformFloat(base + ".intensity", context.lights[i].intensity);
-        this->shader->uniformFloat(base + ".range", context.lights[i].range);
+        this->shader->uniformVec3(base + ".position", context.lights[i]->position);
+        this->shader->uniformVec3(base + ".color", context.lights[i]->color);
+        this->shader->uniformFloat(base + ".intensity", context.lights[i]->intensity);
+        this->shader->uniformFloat(base + ".range", context.lights[i]->range);
     }
 
     this->shader->uniformVec3("directionalLight.direction", context.directionalLight.direction);

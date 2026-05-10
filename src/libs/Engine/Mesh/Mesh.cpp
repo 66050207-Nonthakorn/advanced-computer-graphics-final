@@ -2,7 +2,8 @@
 
 #include "GL/glew.h"
 
-Mesh::Mesh(const MeshData& data) {
+Mesh::Mesh(const MeshData& data, unsigned int drawMode)
+    : drawMode(drawMode), vertices(data.vertices) {
     indexCount = data.indices.size();
 
     glGenVertexArrays(1, &vao);

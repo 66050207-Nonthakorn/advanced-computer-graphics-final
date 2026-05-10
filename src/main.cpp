@@ -11,6 +11,7 @@
 #include "Engine/Material/BillboardMaterial.hpp"
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Material/ParticleMaterial.hpp"
+#include "Engine/Material/UnlitMaterial.hpp"
 #include "Engine/Texture/Texture2D.hpp"
 #include "Engine/Texture/BRDFLUTTexture.hpp"
 #include "Engine/Texture/HDREquirectangularTexture.hpp"
@@ -20,6 +21,7 @@
 #include "Main/Constants.hpp"
 
 #include "glm/vec3.hpp"
+#include "glm/vec4.hpp"
 
 #include <vector>
 #include <memory>
@@ -72,6 +74,7 @@ static void loadAssets(const Window& window) {
     auto& textureManager = TextureManager::instance();
     auto& materialManager = MaterialManager::instance();
 
+    shaderManager.load("unlit", "Shaders/unlit.vert", "Shaders/unlit.frag");
     shaderManager.load("pbr", "Shaders/pbr.vert", "Shaders/pbr.frag");
     shaderManager.load("shadow", "Shaders/shadow.vert", "Shaders/shadow.frag");
     shaderManager.load("cubemap", "Shaders/cubemap.vert", "Shaders/cubemap.frag");
@@ -94,6 +97,7 @@ static void loadAssets(const Window& window) {
     // Add Materials
     materialManager.add("light-icon", std::make_shared<BillboardMaterial>(textureManager.get("light-icon")));
     materialManager.add("particle", std::make_shared<ParticleMaterial>());
+    materialManager.add("normal-debug", std::make_shared<UnlitMaterial>(glm::vec4(0.2f, 1.0f, 0.2f, 1.0f)));
     materialManager.addPBR("default", "default");
     materialManager.addPBR("table", "table", 2.0f);
     materialManager.addPBR("marble", "marble");

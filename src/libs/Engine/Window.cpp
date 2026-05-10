@@ -2,7 +2,7 @@
 #include <iostream>
 #include "Window.hpp"
 
-Window::Window(const int width, const int height, const std::string& title) {
+Window::Window(const int width, const int height, const std::string& title): width(width), height(height) {
     if (glfwInit() == GLFW_FALSE) {
         std::cerr << "GLFW init failed" << std::endl;
         exit(1);

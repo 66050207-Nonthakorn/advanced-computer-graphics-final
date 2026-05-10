@@ -10,6 +10,7 @@
 #include "glm/mat3x3.hpp"
 #include "Renderer.hpp"
 
+
 Renderer::Renderer(const Window &window)
     : window(window)
 {
@@ -44,126 +45,136 @@ void collectNodes(const std::shared_ptr<SceneObject>& node, std::vector<FlatNode
 }
 
 void Renderer::draw(Scene& scene) {
-    // Flatten scene hierarchy into renderable nodes
-    std::vector<FlatNode> allNodes;
+    // 1. Flatten and categorize nodes
+    std::vector<FlatNode> opaqueNodes;
+    std::vector<FlatNode> transparentNodes;
+    std::vector<FlatNode> overlayNodes;
+
     for (auto& root : scene.sceneObjects) {
-        collectNodes(root, allNodes);
+        std::vector<FlatNode> flat;
+        collectNodes(root, flat);
+        for (auto& node : flat) {
+            if (node.obj->material->isOverlay()) {
+                overlayNodes.push_back(node);
+            } else if (node.obj->material->isTransparent()) {
+                transparentNodes.push_back(node);
+            } else {
+                opaqueNodes.push_back(node);
+            }
+        }
     }
 
     // Shadow pass
     glm::mat4 lightSpaceMat = scene.directionalLight.getLightSpaceMatrix();
     auto shadowShader = ShaderManager::instance().get("shadow");
 
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
     glViewport(0, 0, SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
     glBindFramebuffer(GL_FRAMEBUFFER, scene.directionalLight.getShadowFBO());
     glClear(GL_DEPTH_BUFFER_BIT);
 
+    GLboolean cullWasEnabled = glIsEnabled(GL_CULL_FACE);
+    GLint previousCullFaceMode = GL_BACK;
+    glGetIntegerv(GL_CULL_FACE_MODE, &previousCullFaceMode);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
     shadowShader->use();
     shadowShader->uniformMat4("lightSpaceMatrix", lightSpaceMat);
 
-    for (auto& node : allNodes) {
+    for (auto& node : opaqueNodes) {
         if (dynamic_cast<ParticleMaterial*>(node.obj->material.get())) continue;
-        if (node.obj->material->isOverlay()) continue;
+        
         shadowShader->uniformMat4("model", node.worldMatrix);
         glBindVertexArray(node.obj->mesh->vao);
-        glDrawElements(GL_TRIANGLES, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
+        glDrawElements(node.obj->mesh->drawMode, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
     }
 
+    glCullFace(previousCullFaceMode);
+    if (!cullWasEnabled) {
+        glDisable(GL_CULL_FACE);
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    
+    glViewport(0, 0, window.width, window.height);
 
-    // Lighting pass — opaque first (grouped by material), transparent last (back-to-front)
     glm::vec3 camPos = scene.camera->position;
-    std::sort(allNodes.begin(), allNodes.end(),
-        [&camPos](const auto& a, const auto& b) {
-            if (a.obj->material.get() != b.obj->material.get())
-                return a.obj->material.get() < b.obj->material.get();
-            
-            glm::vec3 pa = glm::vec3(a.worldMatrix[3]);
-            glm::vec3 pb = glm::vec3(b.worldMatrix[3]);
-            
-            return glm::dot(pa - camPos, pa - camPos) > glm::dot(pb - camPos, pb - camPos);
-        });
 
-    auto drawNodes = [&](bool transparent) {
+    // Sort Opaque By Material
+    std::sort(opaqueNodes.begin(), opaqueNodes.end(), [](const auto& a, const auto& b) {
+        return a.obj->material.get() < b.obj->material.get();
+    });
+
+    // Sort TransparentBack-to-Front
+    std::sort(transparentNodes.begin(), transparentNodes.end(), [&camPos](const auto& a, const auto& b) {
+        glm::vec3 deltaA = glm::vec3(a.worldMatrix[3]) - camPos;
+        glm::vec3 deltaB = glm::vec3(b.worldMatrix[3]) - camPos;
+        float distA = glm::dot(deltaA, deltaA);
+        float distB = glm::dot(deltaB, deltaB);
+        return distA > distB;
+    });
+
+    // Main render pass
+    auto drawList = [&](std::vector<FlatNode>& nodes) {
         Material* lastMaterial = nullptr;
-        for (auto& node : allNodes) {
-            if (node.obj->material->isOverlay()) continue;
-            if (node.obj->material->isTransparent() != transparent) continue;
+        for (auto& node : nodes) {
             Material* mat = node.obj->material.get();
             if (mat != lastMaterial) {
                 unsigned int iblIrr  = scene.cubemap.iblIrradianceMap ? scene.cubemap.iblIrradianceMap->getId() : 0;
                 unsigned int iblPref = scene.cubemap.iblPrefilterMap  ? scene.cubemap.iblPrefilterMap->getId()  : 0;
                 unsigned int iblLUT  = scene.cubemap.iblBrdfLUT       ? scene.cubemap.iblBrdfLUT->getId()       : 0;
-                float iblIntensity = scene.cubemap.iblIntensity;
-                int iblMips = scene.cubemap.iblPrefilterMips;
 
                 mat->bindPerFrame({ *scene.camera, scene.lights, scene.directionalLight,
                                     scene.directionalLight.getDepthMapID(), lightSpaceMat,
-                                    iblIrr, iblPref, iblMips, iblLUT, iblIntensity });
+                                    iblIrr, iblPref, scene.cubemap.iblPrefilterMips, iblLUT, scene.cubemap.iblIntensity });
                 lastMaterial = mat;
             }
-            node.obj->material->bindPerObject({ node.worldMatrix });
+            mat->bindPerObject({ node.worldMatrix });
             glBindVertexArray(node.obj->mesh->vao);
-            glDrawElements(GL_TRIANGLES, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
+            glDrawElements(node.obj->mesh->drawMode, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
         }
     };
 
+    // Execute Passes in order
+    drawList(opaqueNodes);
+    
+    // Draw Cubemap (handled depth settings internally)
     auto drawCubemap = [&]() {
         if (scene.cubemap.environmentMap == nullptr) return;
+
+        GLboolean cullEnabled = glIsEnabled(GL_CULL_FACE);
+        if (cullEnabled) {
+            glDisable(GL_CULL_FACE);
+        }
 
         auto cubemapShader = ShaderManager::instance().get("cubemap");
         cubemapShader->use();
         cubemapShader->uniformMat4("view", scene.camera->getView());
         cubemapShader->uniformMat4("projection", scene.camera->getProjection());
         cubemapShader->uniformInt("cubemap", 0);
-
         glDepthFunc(GL_LEQUAL);
         glDepthMask(GL_FALSE);
-
         scene.cubemap.environmentMap->bind(0);
-
         glBindVertexArray(scene.cubemap.cube->vao);
         glDrawElements(GL_TRIANGLES, scene.cubemap.cube->indexCount, GL_UNSIGNED_INT, 0);
-
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
-    };
 
-    drawNodes(false); // Draw alpha = 1.0
+        if (cullEnabled) {
+            glEnable(GL_CULL_FACE);
+        }
+    };
     drawCubemap();
 
+    // Transparent Pass
+    glEnable(GL_BLEND);
     glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    drawNodes(true); // Draw alpha < 1.0
-    glDisable(GL_BLEND);
+    drawList(transparentNodes);
     glDepthMask(GL_TRUE);
-
-    // Overlay pass — billboards always render on top
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    {
-        Material* lastMaterial = nullptr;
-        for (auto& node : allNodes) {
-            if (!node.obj->material->isOverlay()) continue;
-            Material* mat = node.obj->material.get();
-            if (mat != lastMaterial) {
-                unsigned int iblIrr  = scene.cubemap.iblIrradianceMap ? scene.cubemap.iblIrradianceMap->getId() : 0;
-                unsigned int iblPref = scene.cubemap.iblPrefilterMap  ? scene.cubemap.iblPrefilterMap->getId()  : 0;
-                unsigned int iblLUT  = scene.cubemap.iblBrdfLUT       ? scene.cubemap.iblBrdfLUT->getId()       : 0;
-                mat->bindPerFrame({ *scene.camera, scene.lights, scene.directionalLight,
-                                    scene.directionalLight.getDepthMapID(), lightSpaceMat,
-                                    iblIrr, iblPref, scene.cubemap.iblPrefilterMips, iblLUT, scene.cubemap.iblIntensity });
-                lastMaterial = mat;
-            }
-            node.obj->material->bindPerObject({ node.worldMatrix });
-            glBindVertexArray(node.obj->mesh->vao);
-            glDrawElements(GL_TRIANGLES, node.obj->mesh->indexCount, GL_UNSIGNED_INT, 0);
-        }
-    }
     glDisable(GL_BLEND);
+
+    // Overlay Pass
+    glDisable(GL_DEPTH_TEST);
+    drawList(overlayNodes);
     glEnable(GL_DEPTH_TEST);
 }

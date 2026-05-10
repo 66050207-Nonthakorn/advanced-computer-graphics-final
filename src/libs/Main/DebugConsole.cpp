@@ -21,16 +21,17 @@ void DebugConsole::poll(std::vector<Command>& out) {
 static void printHelp() {
     std::cout <<
         "\n--- Debug Console Commands ---\n"
-        "  wind <float>                         set cloth wind gust (default: 15)\n"
-        "  light [on|off]                       show/hide all light specular highlights (default: show)\n"
-        "  ibl [on|off]                         toggle image-based lighting (default: on)\n"
-        "  pointlight [icon|noicon]             show/hide point-light debug icons (default: noicon)\n"
-        "  pointlight [animate|noanimate]       toggle pulsing animation on first point light (default: noanimate)\n"
-        "  particle [on|off]                    show/hide particle system (default: on)\n"
+        "  cloth normal [on|off]                show/hide cloth normal debug lines (default: off)\n"
+        "  cloth wind <float>                   set cloth wind gust (default: 15)\n"
         "  camera [lock|unlock]                 lock/unlock camera (default: lock)\n"
         "  camera reset                         reset camera to default position\n"
         "  draw [full|line|point]               set draw mode (default: full)\n"
-        "  shading [norm|shadow|amb|diff|spec]  set shading mode (default: norm)\n"
+        "  light [on|off]                       show/hide all color of the light sources (default: show)\n"
+        "  ibl [on|off]                         toggle image-based lighting (default: on)\n"
+        "  pointlight icon [on|off]             show/hide point-light debug icons (default: noicon)\n"
+        "  pointlight animate [on|off]          toggle pulsing animation on first point light (default: noanimate)\n"
+        "  particle [on|off]                    show/hide particle system (default: on)\n"
+        "  shading [full|shadow|amb|diff|spec]  set shading mode (default: full)\n"
         "  help                                 show this message\n"
         "------------------------------\n";
 }
@@ -88,10 +89,19 @@ void DebugConsole::parse(const std::string& line) {
     }
     else if (cmd.cmd == "pointlight") {
         if (!readString(cmd.arg)) goto bad;
-        if (cmd.arg != "icon" &&
-            cmd.arg != "noicon" &&
-            cmd.arg != "animate" &&
-            cmd.arg != "noanimate") goto bad;
+        if (cmd.arg == "icon") {
+            if (!readString(cmd.s0)) goto bad;
+            if (cmd.s0 != "on" &&
+                cmd.s0 != "off") goto bad;
+        }
+        else if (cmd.arg == "animate") {
+            if (!readString(cmd.s0)) goto bad;
+            if (cmd.s0 != "on" &&
+                cmd.s0 != "off") goto bad;
+        }
+        else {
+            goto bad;
+        }
     }
     else if (cmd.cmd == "particle") {
         if (!readString(cmd.arg)) goto bad;
@@ -110,9 +120,24 @@ void DebugConsole::parse(const std::string& line) {
             cmd.arg != "line" &&
             cmd.arg != "point") goto bad;
     }
+    else if (cmd.cmd == "cloth") {
+        if (!readString(cmd.arg)) goto bad;
+        if (cmd.arg == "wind") {
+            if (!readFloat(cmd.f0)) goto bad;
+            if (cmd.f0 < 0) cmd.f0 = 0;
+        }
+        else if (cmd.arg == "normal") {
+            if (!readString(cmd.s0)) goto bad;
+            if (cmd.s0 != "on" &&
+                cmd.s0 != "off") goto bad;
+        }
+        else {
+            goto bad;
+        }
+    }
     else if (cmd.cmd == "shading") {
         if (!readString(cmd.arg)) goto bad;
-        if (cmd.arg != "norm" &&
+        if (cmd.arg != "full" &&
             cmd.arg != "shadow" &&
             cmd.arg != "amb" &&
             cmd.arg != "diff" &&

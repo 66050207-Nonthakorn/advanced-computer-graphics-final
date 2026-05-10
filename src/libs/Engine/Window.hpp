@@ -21,6 +21,7 @@ public:
 
     GLFWwindow* getHandle() const;
     
+    int width, height;
 private:
     bool isShowCursor = false;
     GLFWwindow* handle;

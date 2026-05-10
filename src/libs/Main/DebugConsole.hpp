@@ -17,7 +17,7 @@ class DebugConsole {
 public:
     struct Command {
         int index = 0;
-        std::string cmd, arg;
+        std::string cmd, arg, s0;
         float f0 = 0, f1 = 0, f2 = 0;
     };
 

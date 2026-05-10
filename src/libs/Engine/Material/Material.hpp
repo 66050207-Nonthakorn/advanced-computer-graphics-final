@@ -13,7 +13,7 @@ class Material {
 public:
     struct PerFrameContext {
         const Camera& camera;
-        const std::vector<PointLight>& lights;
+        const std::vector<std::shared_ptr<PointLight>>& lights;
         const DirectionalLight& directionalLight;
         unsigned int dirShadowMap;
         glm::mat4 lightSpaceMatrix;

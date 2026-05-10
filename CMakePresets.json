@@ -56,7 +56,6 @@
     { "name": "build-win-release", "configurePreset": "win-msvc",  "configuration": "Release" },
     { "name": "build-mac-intel",   "configurePreset": "mac-intel"  },
     { "name": "build-mac-arm64",   "configurePreset": "mac-arm64"  },
-    
     { "name": "build-linux",       "configurePreset": "linux-x64"  }
   ]
 }

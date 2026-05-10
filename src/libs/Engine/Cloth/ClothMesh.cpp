@@ -230,6 +230,8 @@ void ClothMesh::uploadToGPU() {
         cpuVertices[i] = { particles[i].position, particles[i].normal, particles[i].uv };
     }
 
+    vertices = cpuVertices;
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0,
                     cpuVertices.size() * sizeof(Vertex),
