@@ -41,7 +41,7 @@ void collectNodes(const std::shared_ptr<SceneObject>& node, std::vector<FlatNode
     }
 }
 
-} // namespace
+}
 
 void Renderer::draw(Scene& scene) {
     // Flatten scene hierarchy into renderable nodes
@@ -80,9 +80,8 @@ void Renderer::draw(Scene& scene) {
     std::sort(allNodes.begin(), allNodes.end(),
         [&camPos](const auto& a, const auto& b) {
             if (a.obj->material.get() != b.obj->material.get())
-                return a.obj->material.get() < b.obj->material.get(); // group opaques
+                return a.obj->material.get() < b.obj->material.get();
             
-            // far to near
             glm::vec3 pa = glm::vec3(a.worldMatrix[3]);
             glm::vec3 pb = glm::vec3(b.worldMatrix[3]);
             

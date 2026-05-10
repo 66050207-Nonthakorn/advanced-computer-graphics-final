@@ -42,7 +42,7 @@ BRDFLUTTexture::BRDFLUTTexture(int size) {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-    // --- Integration pass ---
+    // Integration pass 
     GLint prevViewport[4];
     glGetIntegerv(GL_VIEWPORT, prevViewport);
 

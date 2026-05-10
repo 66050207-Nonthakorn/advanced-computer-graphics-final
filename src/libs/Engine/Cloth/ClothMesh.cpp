@@ -36,7 +36,6 @@ ClothMesh::ClothMesh(int rows, int cols, float width, float height)
     : Mesh(buildInitialMeshData(rows, cols, width, height)),
       rows(rows), cols(cols)
 {
-    // Re-upload VBO as dynamic now that base Mesh has created it statically
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER,
@@ -69,7 +68,6 @@ void ClothMesh::buildGrid(float width, float height) {
 
     cpuVertices.resize(rows * cols);
 
-    // Structural springs (horizontal + vertical)
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
             if (c + 1 < cols) addSpring(r * cols + c, r * cols + c + 1);
@@ -77,7 +75,6 @@ void ClothMesh::buildGrid(float width, float height) {
         }
     }
 
-    // Shear springs (diagonals)
     for (int r = 0; r < rows - 1; ++r) {
         for (int c = 0; c < cols - 1; ++c) {
             addSpring(r * cols + c,         (r + 1) * cols + c + 1);
@@ -85,7 +82,6 @@ void ClothMesh::buildGrid(float width, float height) {
         }
     }
 
-    // Bend springs (skip-one)
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols - 2; ++c) addSpring(r * cols + c, r * cols + c + 2);
     }
@@ -152,8 +148,7 @@ void ClothMesh::applyWind(float dt) {
 void ClothMesh::update(float dt) {
     if (!std::isfinite(dt) || dt <= 0.0f) return;
 
-    // Guard against large frame-time spikes (e.g. window drag on Windows) by
-    // clamping simulated time and integrating in smaller substeps.
+    // Guard against large frame-time spikes (e.g. window drag on Windows)
     constexpr float maxSimDt = 1.0f / 60.0f;
     constexpr float maxSubstepDt = 1.0f / 120.0f;
 

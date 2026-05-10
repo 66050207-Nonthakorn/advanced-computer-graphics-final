@@ -8,7 +8,6 @@
 #include "Engine/Manager/TextureManager.hpp"
 #include "Engine/Manager/MaterialManager.hpp"
 #include "Engine/Manager/InputManager.hpp"
-#include "Engine/Material/BlinnPhongMaterial.hpp"
 #include "Engine/Material/BillboardMaterial.hpp"
 #include "Engine/Material/PBRMaterial.hpp"
 #include "Engine/Material/ParticleMaterial.hpp"
@@ -73,7 +72,6 @@ static void loadAssets(const Window& window) {
     auto& textureManager = TextureManager::instance();
     auto& materialManager = MaterialManager::instance();
 
-    shaderManager.load("unlit", "Shaders/unlit.vert", "Shaders/unlit.frag");
     shaderManager.load("pbr", "Shaders/pbr.vert", "Shaders/pbr.frag");
     shaderManager.load("shadow", "Shaders/shadow.vert", "Shaders/shadow.frag");
     shaderManager.load("cubemap", "Shaders/cubemap.vert", "Shaders/cubemap.frag");
@@ -85,8 +83,6 @@ static void loadAssets(const Window& window) {
     shaderManager.load("billboard", "Shaders/billboard.vert", "Shaders/billboard.frag");
 
     textureManager.add("light-icon", std::make_shared<Texture2D>("Textures/light-bulb.png"));
-    textureManager.add("pure-sky-hdr", std::make_shared<HDREquirectangularTexture>("Textures/Cubemap/PureSky.hdr"));
-    textureManager.add("street-night-hdr", std::make_shared<HDREquirectangularTexture>("Textures/Cubemap/StreetNight.hdr"));
     textureManager.add("sunset-hdr", std::make_shared<HDREquirectangularTexture>("Textures/Cubemap/Sunset.hdr"));
     textureManager.add("brdf-lut-512", std::make_shared<BRDFLUTTexture>(512));
     textureManager.addPBR("table", "Textures/PBR/Table");

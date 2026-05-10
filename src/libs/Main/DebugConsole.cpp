@@ -3,10 +3,6 @@
 #include <iostream>
 #include <sstream>
 
-// ---------------------------------------------------------------------------
-// Lifecycle
-// ---------------------------------------------------------------------------
-
 DebugConsole::DebugConsole() {
     thread = std::thread(&DebugConsole::run, this);
 }

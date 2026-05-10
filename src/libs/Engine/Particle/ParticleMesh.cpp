@@ -73,7 +73,7 @@ void ParticleMesh::update(float dt, const glm::mat4& viewMatrix) {
         p.position += p.velocity * dt;
         p.life     -= dt;
 
-        float t  = 1.0f - (p.life / p.maxLife); // 0 → 1 over lifetime
+        float t  = 1.0f - (p.life / p.maxLife); // 0 -> 1 over lifetime
         p.color   = glm::mix(startColor, endColor, t);
     }
 
@@ -88,7 +88,6 @@ void ParticleMesh::update(float dt, const glm::mat4& viewMatrix) {
 }
 
 void ParticleMesh::rebuildQuads(const glm::mat4& viewMatrix) {
-    // Camera right/up extracted from the view matrix rows
     glm::vec3 right = { viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0] };
     glm::vec3 up    = { viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1] };
 

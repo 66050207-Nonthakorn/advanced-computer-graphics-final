@@ -152,7 +152,7 @@ void MainScene::update(float dt) {
     cupSmokeParticle->update(dt, camera->getView());
 
     if (lightsEnabled && pointLightAnimationEnabled && !lights.empty()) {
-        // light effect that is like electricity is crackling and flickering
+        // Light effect that is like electricity is crackling and flickering
         float time = static_cast<float>(glfwGetTime());
         lights[0].intensity = 40.0f + 10.0f * std::sin(time * 20.0f) + 10.0f * std::sin(time * 35.0f);
     }
@@ -164,14 +164,15 @@ void MainScene::update(float dt) {
 }
 
 namespace {
-    // Helper function to set debug mode for all PBR materials
-    void setDebugMode(int mode) {
-        static const char* pbrNames[] = { "default", "coffee-cup", "table", "marble", "glass", "cloth" };
-        for (auto& name : pbrNames) {
-            auto mat = std::dynamic_pointer_cast<PBRMaterial>(MaterialManager::instance().get(name));
-            if (mat) mat->debugMode = mode;
-        }
+
+void setDebugMode(int mode) {
+    static const char* pbrNames[] = { "default", "coffee-cup", "table", "marble", "glass", "cloth" };
+    for (auto& name : pbrNames) {
+        auto mat = std::dynamic_pointer_cast<PBRMaterial>(MaterialManager::instance().get(name));
+        if (mat) mat->debugMode = mode;
     }
+}
+
 }
 
 void MainScene::applyDebugCommands() {

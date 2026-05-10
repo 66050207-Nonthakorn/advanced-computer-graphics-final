@@ -76,7 +76,7 @@ unsigned int Shader::compile(GLenum type, const std::string &source) {
     glShaderSource(shader, 1, &sourceCStr, NULL);
     glCompileShader(shader);
 
-    // print compile errors if any
+    // Print compile errors if any
     int isCompiled;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
     

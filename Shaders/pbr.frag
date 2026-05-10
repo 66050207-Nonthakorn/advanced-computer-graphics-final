@@ -31,6 +31,7 @@ in vec2 uv;
 out vec4 fragColor;
 
 uniform vec3 viewPosition;
+
 uniform float normalStrength;
 uniform Material material;
 uniform bool useAlbedoMap;
@@ -77,7 +78,7 @@ vec3 getNormalFromMap() {
 
     vec3 T = Q1 * st2.y - Q2 * st1.y;
     T = normalize(T);
-    T = normalize(T - dot(T, N) * N); // Gram-Schmidt orthogonalization
+    T = normalize(T - dot(T, N) * N);
     
     float det = (st1.x * st2.y - st2.x * st1.y);
     vec3 B = normalize(cross(T, N)) * (det < 0.0 ? -1.0 : 1.0);
@@ -113,7 +114,6 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-// Fresnel with roughness bias — used for IBL ambient term
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
@@ -157,11 +157,10 @@ void main() {
     vec3 F0 = vec3(0.02);
     F0 = mix(F0, albedo, metallic);
 
-    // Separate diffuse and specular for debug visibility
     vec3 Lo_diff = vec3(0.0);
     vec3 Lo_spec = vec3(0.0);
 
-    // Point lights
+    // Point lights contribution
     for(int i = 0; i < pointLightCount; i++) {
         vec3 toLight = pointLights[i].position - worldPosition;
         float dist = length(toLight);
@@ -231,7 +230,7 @@ void main() {
         vec3 irradiance = texture(irradianceMap, N).rgb;
         amb_diff = kD_ibl * irradiance * albedo * ao * iblIntensity;
 
-        // Specular — clamp prefiltered color to guard against HDR fireflies from bright stars/sun
+        // Specular
         vec3 R = reflect(-V, N);
         float mip = roughness * iblPrefilterMaxLod;
         vec3 prefilteredColor = min(textureLod(prefilterMap, R, mip).rgb, vec3(50.0));
@@ -241,12 +240,12 @@ void main() {
 
     // Debug modes
     if (debugMode == 1) {
-        // Shadow only — grayscale; 1.0 = fully in shadow
+        // Shadow only
         fragColor = vec4(vec3(dirShadow), 1.0);
         return;
     }
     if (debugMode == 2) {
-        // Ambient only (IBL diffuse + IBL specular)
+        // Ambient only (IBL diffuse + IBL specular
         vec3 c = amb_diff + amb_spec;
         c = c / (c + vec3(1.0));
         c = pow(c, vec3(1.0 / 2.2));

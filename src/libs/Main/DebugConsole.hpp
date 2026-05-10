@@ -12,8 +12,7 @@
 #include <vector>
 #include <memory>
 
-// Runs on a background thread, reads lines from stdin, and queues mutations
-// that MainScene::update applies on the main thread each frame.
+// Runs on a background thread, reads lines from stdin
 class DebugConsole {
 public:
     struct Command {
