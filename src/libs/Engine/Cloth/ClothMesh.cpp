@@ -3,6 +3,7 @@
 #include "GL/glew.h"
 #include "glm/gtc/type_ptr.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 
@@ -13,8 +14,8 @@ static MeshData buildInitialMeshData(int rows, int cols, float width, float heig
         for (int c = 0; c < cols; ++c) {
             float u = static_cast<float>(c) / (cols - 1);
             float v = static_cast<float>(r) / (rows - 1);
-            glm::vec3 pos = { (u - 0.5f) * width, 0.0f, (v - 0.5f) * height };
-            data.vertices.push_back({ pos, {0, 1, 0}, {u, v} });
+            glm::vec3 pos = { (0.5f - u) * width, (0.5f - v) * height, 0.0f };
+            data.vertices.push_back({ pos, {0, 0, 1}, {u, v} });
         }
     }
 
@@ -56,12 +57,12 @@ void ClothMesh::buildGrid(float width, float height) {
         for (int c = 0; c < cols; ++c) {
             float u = static_cast<float>(c) / (cols - 1);
             float v = static_cast<float>(r) / (rows - 1);
-            glm::vec3 pos = { (u - 0.5f) * width, 0.0f, (v - 0.5f) * height };
+            glm::vec3 pos = { (0.5f - u) * width, (0.5f - v) * height, 0.0f };
 
             auto& p = particles[r * cols + c];
             p.position     = pos;
             p.prevPosition = pos;
-            p.normal       = { 0, 1, 0 };
+            p.normal       = { 0, 0, 1 };
             p.uv           = { u, v };
         }
     }
@@ -149,17 +150,31 @@ void ClothMesh::applyWind(float dt) {
 }
 
 void ClothMesh::update(float dt) {
-    // Verlet integration
-    for (auto& p : particles) {
-        if (p.pinned) continue;
-        glm::vec3 vel = (p.position - p.prevPosition) * damping;
-        glm::vec3 next = p.position + vel + gravity * (dt * dt);
-        p.prevPosition = p.position;
-        p.position     = next;
+    if (!std::isfinite(dt) || dt <= 0.0f) return;
+
+    // Guard against large frame-time spikes (e.g. window drag on Windows) by
+    // clamping simulated time and integrating in smaller substeps.
+    constexpr float maxSimDt = 1.0f / 60.0f;
+    constexpr float maxSubstepDt = 1.0f / 120.0f;
+
+    float clampedDt = std::min(dt, maxSimDt);
+    int substeps = std::max(1, static_cast<int>(std::ceil(clampedDt / maxSubstepDt)));
+    float stepDt = clampedDt / static_cast<float>(substeps);
+
+    for (int step = 0; step < substeps; ++step) {
+        // Verlet integration
+        for (auto& p : particles) {
+            if (p.pinned) continue;
+            glm::vec3 vel = (p.position - p.prevPosition) * damping;
+            glm::vec3 next = p.position + vel + gravity * (stepDt * stepDt);
+            p.prevPosition = p.position;
+            p.position = next;
+        }
+
+        applyWind(stepDt);
+        solveConstraints();
     }
 
-    applyWind(dt);
-    solveConstraints();
     recalcNormals();
     uploadToGPU();
 }

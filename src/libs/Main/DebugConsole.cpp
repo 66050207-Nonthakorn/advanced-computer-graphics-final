@@ -25,31 +25,17 @@ void DebugConsole::poll(std::vector<Command>& out) {
 static void printHelp() {
     std::cout <<
         "\n--- Debug Console Commands ---\n"
-        "  cloth.wind <x> <y> <z>         set cloth wind vector\n"
-        "  cloth.windGust <amp>           set wind gust amplitude\n"
-        "  cloth.damping <val>            set cloth damping (0-1)\n"
-        "  cloth.gravity <x> <y> <z>      set gravity vector\n"
-        "  cloth.iterations <n>           set solver iterations\n"
-    "  pointlight.show <0|1>          show/hide point-light debug icons\n"
-    "  pointlight.intensity <v>       set all point-light intensities\n"
-    "  pointlight.color <r> <g> <b>   set all point-light colors\n"
-    "  pointlight.animate <0|1>       toggle pulsing animation on first point light\n"
-    "  dirlight.direction <x> <y> <z> set directional light direction\n"
-    "  dirlight.intensity <v>         set directional light intensity\n"
-    "  dirlight.color <r> <g> <b>     set directional light color\n"
-    "  camera.lock [0|1]              lock/unlock camera (default: 1)\n"
-    "  camera.unlock                  unlock camera\n"
-        "  camera.reset                   reset camera to default position\n"
-        "  draw.full                      set draw mode to normal\n"
-        "  draw.line                      set draw mode to draw line only\n"
-        "  draw.point                     set draw mode to draw point only\n"
-    "  shading.normal                 normal shading\n"
-    "  shading.shadow                 shadow-only debug shading\n"
-    "  shading.ambient                ambient-only debug shading\n"
-    "  shading.diffuse                diffuse-only debug shading\n"
-    "  shading.specular               specular-only debug shading\n"
-    "  shading.debug <0-4>            alias: 0=normal 1=shadow 2=ambient 3=diffuse 4=specular\n"
-        "  help                           show this message\n"
+        "  wind <float>                         set cloth wind gust (default: 15)\n"
+        "  light [on|off]                       show/hide all light specular highlights (default: show)\n"
+        "  ibl [on|off]                         toggle image-based lighting (default: on)\n"
+        "  pointlight [icon|noicon]             show/hide point-light debug icons (default: noicon)\n"
+        "  pointlight [animate|noanimate]       toggle pulsing animation on first point light (default: noanimate)\n"
+        "  particle [on|off]                    show/hide particle system (default: on)\n"
+        "  camera [lock|unlock]                 lock/unlock camera (default: lock)\n"
+        "  camera reset                         reset camera to default position\n"
+        "  draw [full|line|point]               set draw mode (default: full)\n"
+        "  shading [norm|shadow|amb|diff|spec]  set shading mode (default: norm)\n"
+        "  help                                 show this message\n"
         "------------------------------\n";
 }
 
@@ -69,8 +55,9 @@ void DebugConsole::run() {
 
 void DebugConsole::parse(const std::string& line) {
     std::istringstream ss(line);
-    std::string token;
-    ss >> token;
+
+    Command cmd;
+    ss >> cmd.cmd;
 
     auto readFloat = [&](float& v) {
         return bool(ss >> v);
@@ -78,116 +65,65 @@ void DebugConsole::parse(const std::string& line) {
     auto readInt = [&](int& v) {
         return bool(ss >> v);
     };
+    auto readString = [&](std::string& v) {
+        return bool(ss >> v);
+    };
     auto readVec3  = [&](float& x, float& y, float& z) {
         return bool(ss >> x >> y >> z);
     };
 
-    Command cmd;
-
-    if (token == "help") {
+    if (cmd.cmd == "help") {
         printHelp();
         return;
     }
-    else if (token == "cloth.wind") {
-        if (!readVec3(cmd.f0, cmd.f1, cmd.f2)) goto bad;
-        cmd.type = Command::Type::ClothWind;
-    }
-    else if (token == "cloth.windGust") {
+    else if (cmd.cmd == "wind") {
         if (!readFloat(cmd.f0)) goto bad;
-        cmd.type = Command::Type::ClothWindGust;
+        if (cmd.f0 < 0) cmd.f0 = 0;
     }
-    else if (token == "cloth.damping") {
-        if (!readFloat(cmd.f0)) goto bad;
-        cmd.type = Command::Type::ClothDamping;
+    else if (cmd.cmd == "light") {
+        if (!readString(cmd.arg)) goto bad;
+        if (cmd.arg != "on" &&
+            cmd.arg != "off") goto bad;
     }
-    else if (token == "cloth.gravity") {
-        if (!readVec3(cmd.f0, cmd.f1, cmd.f2)) goto bad;
-        cmd.type = Command::Type::ClothGravity;
+    else if (cmd.cmd == "ibl") {
+        if (!readString(cmd.arg)) goto bad;
+        if (cmd.arg != "on" &&
+            cmd.arg != "off") goto bad;
     }
-    else if (token == "cloth.iterations") {
-        if (!readFloat(cmd.f0)) goto bad;
-        cmd.type = Command::Type::ClothIterations;
+    else if (cmd.cmd == "pointlight") {
+        if (!readString(cmd.arg)) goto bad;
+        if (cmd.arg != "icon" &&
+            cmd.arg != "noicon" &&
+            cmd.arg != "animate" &&
+            cmd.arg != "noanimate") goto bad;
     }
-    else if (token == "pointlight.show") {
-        if (!readFloat(cmd.f0) || (cmd.f0 < 0.0f || cmd.f0 > 1.0f)) goto bad;
-        cmd.type = Command::Type::PointLightDebug;
+    else if (cmd.cmd == "particle") {
+        if (!readString(cmd.arg)) goto bad;
+        if (cmd.arg != "on" &&
+            cmd.arg != "off") goto bad;
     }
-    else if (token == "pointlight.intensity") {
-        if (!readFloat(cmd.f0)) goto bad;
-        cmd.type = Command::Type::PointLightIntensity;
+    else if (cmd.cmd == "camera") {
+        if (!readString(cmd.arg)) goto bad;
+        if (cmd.arg != "lock" &&
+            cmd.arg != "unlock" &&
+            cmd.arg != "reset") goto bad;
     }
-    else if (token == "pointlight.color") {
-        if (!readVec3(cmd.f0, cmd.f1, cmd.f2)) goto bad;
-        cmd.type = Command::Type::PointLightColor;
+    else if (cmd.cmd == "draw") {
+        if (!readString(cmd.arg)) goto bad;
+        if (cmd.arg != "full" &&
+            cmd.arg != "line" &&
+            cmd.arg != "point") goto bad;
     }
-    else if (token == "pointlight.animate") {
-        if (!readFloat(cmd.f0) || (cmd.f0 < 0.0f || cmd.f0 > 1.0f)) goto bad;
-        cmd.type = Command::Type::PointLightAnimate;
-    }
-    else if (token == "dirlight.direction") {
-        if (!readVec3(cmd.f0, cmd.f1, cmd.f2)) goto bad;
-        cmd.type = Command::Type::DirectionalLightDirection;
-    }
-    else if (token == "dirlight.intensity") {
-        if (!readFloat(cmd.f0)) goto bad;
-        cmd.type = Command::Type::DirectionalLightIntensity;
-    }
-    else if (token == "dirlight.color") {
-        if (!readVec3(cmd.f0, cmd.f1, cmd.f2)) goto bad;
-        cmd.type = Command::Type::DirectionalLightColor;
-    }
-    else if (token == "camera.lock") {
-        if (!(ss >> cmd.f0)) {
-            cmd.f0 = 1.0f;
-        }
-        if (cmd.f0 < 0.0f || cmd.f0 > 1.0f) goto bad;
-        cmd.type = Command::Type::CameraLock;
-    }
-    else if (token == "camera.unlock") {
-        cmd.type = Command::Type::CameraLock;
-        cmd.f0 = 0.0f;
-    }
-    else if (token == "camera.reset") {
-        cmd.type = Command::Type::CameraReset;
-    }
-    else if (token == "draw.full") {
-        cmd.type = Command::Type::DrawFull;
-    }
-    else if (token == "draw.line") {
-        cmd.type = Command::Type::DrawLine;
-    }
-    else if (token == "draw.point") {
-        cmd.type = Command::Type::DrawPoint;
-    }
-    else if (token == "shading.normal") {
-        cmd.type = Command::Type::ShadingNormal;
-    }
-    else if (token == "shading.shadow") {
-        cmd.type = Command::Type::ShadingShadow;
-    }
-    else if (token == "shading.ambient") {
-        cmd.type = Command::Type::ShadingAmbient;
-    }
-    else if (token == "shading.diffuse") {
-        cmd.type = Command::Type::ShadingDiffuse;
-    }
-    else if (token == "shading.specular") {
-        cmd.type = Command::Type::ShadingSpecular;
-    }
-    else if (token == "shading.debug") {
-        int mode = 0;
-        if (!readInt(mode)) goto bad;
-        switch (mode) {
-            case 0: cmd.type = Command::Type::ShadingNormal; break;
-            case 1: cmd.type = Command::Type::ShadingShadow; break;
-            case 2: cmd.type = Command::Type::ShadingAmbient; break;
-            case 3: cmd.type = Command::Type::ShadingDiffuse; break;
-            case 4: cmd.type = Command::Type::ShadingSpecular; break;
-            default: goto bad;
-        }
+    else if (cmd.cmd == "shading") {
+        if (!readString(cmd.arg)) goto bad;
+        if (cmd.arg != "norm" &&
+            cmd.arg != "shadow" &&
+            cmd.arg != "amb" &&
+            cmd.arg != "diff" &&
+            cmd.arg != "spec") goto bad;
     }
     else {
-        std::cout << "[Debug] Unknown command '" << token << "'. Type 'help'.\n";
+        std::cout << "[Debug] Unknown command: '" << cmd.cmd << "'. Type 'help'.\n";
         return;
     }
 
@@ -196,9 +132,8 @@ void DebugConsole::parse(const std::string& line) {
         queue.push_back(cmd);
     }
     
-    std::cout << "[Debug] OK\n";
     return;
 
 bad:
-    std::cout << "[Debug] Bad arguments for '" << token << "'. Type 'help'.\n";
+    std::cout << "[Debug] Bad command arguments for '" << cmd.cmd << "'. Type 'help'.\n";
 }

@@ -12,6 +12,7 @@ struct PointLight {
     vec3 position;
     vec3 color;
     float intensity;
+    float range;
 };
 
 struct DirectionalLight {
@@ -162,11 +163,16 @@ void main() {
 
     // Point lights
     for(int i = 0; i < pointLightCount; i++) {
-        vec3 L = normalize(pointLights[i].position - worldPosition);
+        vec3 toLight = pointLights[i].position - worldPosition;
+        float dist = length(toLight);
+        vec3 L = dist > 1e-4 ? (toLight / dist) : vec3(0.0, 1.0, 0.0);
         vec3 H = normalize(V + L);
 
-        float dist = length(pointLights[i].position - worldPosition);
-        float attenuation = 1.0 / (dist * dist);
+        float invSq = 1.0 / max(dist * dist, 1e-4);
+        float rangeRatio = dist / max(pointLights[i].range, 1e-3);
+        float rangeAtt = clamp(1.0 - pow(rangeRatio, 4.0), 0.0, 1.0);
+        rangeAtt *= rangeAtt;
+        float attenuation = invSq * rangeAtt;
         vec3 radiance = pointLights[i].color * pointLights[i].intensity * attenuation;
 
         float D = distributionGGX(N, H, roughness);

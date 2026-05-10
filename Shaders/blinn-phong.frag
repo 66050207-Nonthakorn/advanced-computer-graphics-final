@@ -10,6 +10,7 @@ struct Light {
     vec3 position;
     vec3 color;
     float intensity;
+    float range;
 };
 
 struct DirectionalLight {
@@ -69,10 +70,15 @@ void main() {
 
     // Point lights
     for (int i = 0; i < pointLightCount; i++) {
-        vec3 L = normalize(pointLights[i].position - worldPosition);
+        vec3 toLight = pointLights[i].position - worldPosition;
+        float dist = length(toLight);
+        vec3 L = dist > 1e-4 ? (toLight / dist) : vec3(0.0, 1.0, 0.0);
         vec3 H = normalize(L + V);
-        float dist = length(pointLights[i].position - worldPosition);
-        float attenuation = 1.0 / (dist * dist);
+        float invSq = 1.0 / max(dist * dist, 1e-4);
+        float rangeRatio = dist / max(pointLights[i].range, 1e-3);
+        float rangeAtt = clamp(1.0 - pow(rangeRatio, 4.0), 0.0, 1.0);
+        rangeAtt *= rangeAtt;
+        float attenuation = invSq * rangeAtt;
         float NdotL = max(dot(N, L), 0.0);
         vec3 diffuse  = NdotL * texColor.rgb * pointLights[i].color * pointLights[i].intensity * attenuation;
         float spec    = pow(max(dot(N, H), 0.0), material.shininess) * material.specular;

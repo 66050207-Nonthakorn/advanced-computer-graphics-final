@@ -16,7 +16,12 @@ private:
     std::shared_ptr<MovableCamera> movableCamera;
     std::shared_ptr<ClothMesh> cloth;
     std::shared_ptr<ParticleMesh> cupSmokeParticle;
+
+    std::vector<std::shared_ptr<SceneObject>> pointLightIcons;
+    
+    bool lightsEnabled = true;
     bool pointLightAnimationEnabled = true;
+    bool particleEnabled = true;
 
     // Debug console
     std::shared_ptr<DebugConsole> debugConsole;

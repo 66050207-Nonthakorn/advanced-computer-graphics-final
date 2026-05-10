@@ -86,25 +86,23 @@ static void loadAssets(const Window& window) {
     shaderManager.load("billboard", "Shaders/billboard.vert", "Shaders/billboard.frag");
 
     textureManager.add("light-icon", std::make_shared<Texture2D>("Textures/light-bulb.png"));
-    textureManager.add("macbook", std::make_shared<Texture2D>("Textures/MacBook.png"));
     textureManager.add("pure-sky-hdr", std::make_shared<HDREquirectangularTexture>("Textures/Cubemap/PureSky.hdr"));
     textureManager.add("street-night-hdr", std::make_shared<HDREquirectangularTexture>("Textures/Cubemap/StreetNight.hdr"));
     textureManager.add("sunset-hdr", std::make_shared<HDREquirectangularTexture>("Textures/Cubemap/Sunset.hdr"));
     textureManager.add("brdf-lut-512", std::make_shared<BRDFLUTTexture>(512));
-    textureManager.addPBR("coffee-cup", "Textures/PBR/CoffeeCup");
     textureManager.addPBR("table", "Textures/PBR/Table");
     textureManager.addPBR("marble", "Textures/PBR/Marble");
     textureManager.addPBR("glass", "Textures/PBR/Glass");
     textureManager.addPBR("cloth", "Textures/PBR/Cloth");
+    textureManager.addPBR("macbook", "Textures/PBR/macbook");
 
     // Add Materials
     materialManager.add("light-icon", std::make_shared<BillboardMaterial>(textureManager.get("light-icon")));
-    materialManager.add("macbook", std::make_shared<BlinnPhongMaterial>(textureManager.get("macbook")));
     materialManager.add("particle", std::make_shared<ParticleMaterial>());
     materialManager.addPBR("default", "default");
-    materialManager.addPBR("coffee-cup", "coffee-cup", 2.0f);
     materialManager.addPBR("table", "table", 2.0f);
-    materialManager.addPBR("marble", "marble", 2.0f);
-    materialManager.addPBR("glass", "glass", 2.0f);
+    materialManager.addPBR("marble", "marble");
+    materialManager.addPBR("glass", "glass");
     materialManager.addPBR("cloth", "cloth", 2.0f);
+    materialManager.addPBR("macbook", "macbook");
 }

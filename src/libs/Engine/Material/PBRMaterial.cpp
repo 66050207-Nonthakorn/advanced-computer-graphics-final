@@ -52,6 +52,7 @@ void PBRMaterial::bindPerFrame(const Material::PerFrameContext& context) {
         this->shader->uniformVec3(base + ".position", context.lights[i].position);
         this->shader->uniformVec3(base + ".color", context.lights[i].color);
         this->shader->uniformFloat(base + ".intensity", context.lights[i].intensity);
+        this->shader->uniformFloat(base + ".range", context.lights[i].range);
     }
 
     this->shader->uniformVec3("directionalLight.direction", context.directionalLight.direction);

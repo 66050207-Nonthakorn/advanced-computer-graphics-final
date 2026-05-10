@@ -17,17 +17,8 @@
 class DebugConsole {
 public:
     struct Command {
-        enum class Type {
-            ClothWind, ClothWindGust, ClothDamping, ClothGravity, ClothIterations,
-            PointLightDebug, PointLightIntensity, PointLightColor, PointLightAnimate,
-            DirectionalLightDirection, DirectionalLightIntensity, DirectionalLightColor,
-            DrawFull, DrawLine, DrawPoint,
-            CameraLock, CameraReset,
-            ShadingNormal, ShadingShadow, ShadingAmbient, ShadingDiffuse, ShadingSpecular,
-            Unknown
-        };
-        Type type = Type::Unknown;
         int index = 0;
+        std::string cmd, arg;
         float f0 = 0, f1 = 0, f2 = 0;
     };
 
